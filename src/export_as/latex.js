@@ -19,7 +19,16 @@ function ExportAsLaTeX() {
 	this._texData = '';
 	this._scale = 0.1; // to convert pixels to document space (TikZ breaks if the numbers get too big, above 500?)
 
-	this.toLaTeX = function () {
+	// from upstream PR #23: 'snippet' mode emits just the tikzpicture block so
+	// the result can be pasted into an existing LaTeX document. 'standalone'
+	// is the historical default.
+	this.toLaTeX = function (mode) {
+		var picture =
+			'\\begin{tikzpicture}[scale=0.2]\n' +
+			'\\tikzstyle{every node}+=[inner sep=0pt]\n' +
+			this._texData +
+			'\\end{tikzpicture}\n';
+		if (mode === 'snippet') return picture;
 		return (
 			'\\documentclass[12pt]{article}\n' +
 			'\\usepackage{tikz}\n' +
@@ -27,10 +36,7 @@ function ExportAsLaTeX() {
 			'\\begin{document}\n' +
 			'\n' +
 			'\\begin{center}\n' +
-			'\\begin{tikzpicture}[scale=0.2]\n' +
-			'\\tikzstyle{every node}+=[inner sep=0pt]\n' +
-			this._texData +
-			'\\end{tikzpicture}\n' +
+			picture +
 			'\\end{center}\n' +
 			'\n' +
 			'\\end{document}\n'

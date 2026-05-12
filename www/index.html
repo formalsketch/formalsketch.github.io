@@ -312,6 +312,19 @@
         font-size: 12px;
         margin-right: 6px;
       }
+      .toolbar select {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 6px 10px;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .toolbar select:hover {
+        border-color: var(--border-strong);
+      }
       .toolbar .current-name {
         color: var(--text-subtle);
         font-size: 13px;
@@ -632,6 +645,10 @@
           <button id="btn-png">PNG</button>
           <button id="btn-svg">SVG</button>
           <button id="btn-latex">LaTeX</button>
+          <select id="latex-mode" title="LaTeX export format">
+            <option value="standalone">standalone</option>
+            <option value="snippet">snippet</option>
+          </select>
         </div>
 
         <div class="canvas-wrap">

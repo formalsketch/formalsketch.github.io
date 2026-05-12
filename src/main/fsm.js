@@ -675,9 +675,13 @@ function saveAsLaTeX() {
 	selectedObject = null;
 	drawUsing(exporter, EXPORT_COLORS);
 	selectedObject = oldSelectedObject;
-	var texData = exporter.toLaTeX();
+	// from upstream PR #23: read the user's standalone-vs-snippet preference
+	// at export time so changes take effect without a reload.
+	var modeEl = document.getElementById('latex-mode');
+	var mode = modeEl ? modeEl.value : 'standalone';
+	var texData = exporter.toLaTeX(mode);
 	Promise.resolve(copyToClipboard(texData)).then(function (ok) {
 		if (ok) showToast('LaTeX copied to clipboard');
-		else showToast('Could not copy — clipboard blocked', 'error');
+		else showToast('Could not copy - clipboard blocked', 'error');
 	});
 }

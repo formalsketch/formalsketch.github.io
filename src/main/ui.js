@@ -16,6 +16,7 @@ function wireUI() {
 	var shortcutsModal = document.getElementById('shortcuts-modal');
 	var shortcutsClose = document.getElementById('btn-close-shortcuts');
 	var shortcutsBody = document.getElementById('shortcuts-body');
+	var latexModeSelect = document.getElementById('latex-mode');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -208,6 +209,22 @@ function wireUI() {
 
 	function closeShortcuts() {
 		if (shortcutsModal) shortcutsModal.hidden = true;
+	}
+
+	// from upstream PR #23: persist standalone-vs-snippet choice across reloads
+	if (latexModeSelect) {
+		var LATEX_MODE_KEY = 'fsm_latex_mode';
+		try {
+			var saved = localStorage.getItem(LATEX_MODE_KEY);
+			if (saved === 'snippet' || saved === 'standalone') {
+				latexModeSelect.value = saved;
+			}
+		} catch (e) {}
+		latexModeSelect.onchange = function () {
+			try {
+				localStorage.setItem(LATEX_MODE_KEY, latexModeSelect.value);
+			} catch (e) {}
+		};
 	}
 
 	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
