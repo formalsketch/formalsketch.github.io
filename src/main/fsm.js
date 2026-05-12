@@ -426,11 +426,12 @@ document.onkeydown = function (e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if (key == 8) {
-		// backspace
-		if (meta) {
-			// Cmd/Ctrl+Backspace = delete selected (treat like Delete key)
+		// from upstream PR #25: bare backspace on an empty-label selection deletes
+		// the element. PR #25's keydown had two backspace branches and the second
+		// was unreachable; keep this as one branch driven by whether text is empty.
+		if (meta || (selectedObject != null && !selectedObject.text)) {
 			deleteSelected();
-		} else if (selectedObject != null && 'text' in selectedObject) {
+		} else if (selectedObject != null) {
 			selectedObject.text = selectedObject.text.substr(
 				0,
 				selectedObject.text.length - 1,
@@ -440,7 +441,7 @@ document.onkeydown = function (e) {
 			commitHistoryDebounced();
 		}
 
-		// backspace is a shortcut for the back button, but do NOT want to change pages
+		// suppress the browser back-nav default regardless of which branch ran
 		return false;
 	} else if (key == 46) {
 		// delete key
