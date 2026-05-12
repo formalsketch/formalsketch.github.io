@@ -34,6 +34,7 @@ function wireUI() {
 	var importBtn = document.getElementById('btn-import');
 	var importFile = document.getElementById('import-file');
 	var exportJSONBtn = document.getElementById('btn-export-json');
+	var layoutBtn = document.getElementById('btn-layout');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -533,6 +534,16 @@ function wireUI() {
 	});
 
 	if (shareBtn) shareBtn.onclick = copyShareLink;
+
+	if (layoutBtn) {
+		layoutBtn.onclick = function () {
+			if (!nodes.length) return;
+			flushHistory();
+			layout(nodes, links);
+			commitHistory();
+			draw();
+		};
+	}
 
 	if (exportJSONBtn) {
 		exportJSONBtn.onclick = function () {
