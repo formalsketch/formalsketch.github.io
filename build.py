@@ -20,9 +20,10 @@ def build():
 		with open(path, 'r', encoding='utf-8') as f:
 			parts.append(f.read())
 	data = '\n'.join(parts)
-	with open(OUT, 'w', encoding='utf-8', newline='') as f:
-		f.write(data)
-	print('built %s (%u bytes)' % (OUT, len(data)))
+	encoded = data.encode('utf-8')
+	with open(OUT, 'wb') as f:
+		f.write(encoded)
+	print('built %s (%u bytes)' % (OUT, len(encoded)))
 
 def stat():
 	return [os.stat(f).st_mtime for f in sources()]

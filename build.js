@@ -30,7 +30,9 @@ function build() {
 	const files = sources();
 	// Normalize CRLF -> LF on read so output is identical regardless of how
 	// source files were checked out, and matches build.py's text-mode read.
-	const data = files.map((f) => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n')).join('\n');
+	const data = files
+		.map((f) => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n'))
+		.join('\n');
 	fs.mkdirSync(path.dirname(OUT), { recursive: true });
 	fs.writeFileSync(OUT, data);
 	const rel = path.relative(__dirname, OUT).split(path.sep).join('/');

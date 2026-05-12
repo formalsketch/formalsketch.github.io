@@ -33,8 +33,12 @@ function copyToClipboard(text) {
 	}
 	if (navigator.clipboard && navigator.clipboard.writeText) {
 		return navigator.clipboard.writeText(text).then(
-			function () { return true; },
-			function () { return fallback(); }
+			function () {
+				return true;
+			},
+			function () {
+				return fallback();
+			},
 		);
 	}
 	return Promise.resolve(fallback());
@@ -42,7 +46,9 @@ function copyToClipboard(text) {
 
 function downloadBlob(filename, content, mime) {
 	try {
-		var blob = new Blob([content], { type: mime || 'application/octet-stream' });
+		var blob = new Blob([content], {
+			type: mime || 'application/octet-stream',
+		});
 		var url = URL.createObjectURL(blob);
 		var a = document.createElement('a');
 		a.href = url;
@@ -51,7 +57,9 @@ function downloadBlob(filename, content, mime) {
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
-		setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+		setTimeout(function () {
+			URL.revokeObjectURL(url);
+		}, 1500);
 		return true;
 	} catch (e) {
 		return false;
