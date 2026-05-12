@@ -31,6 +31,9 @@ function wireUI() {
 	var lintBody = document.getElementById('lint-body');
 	var lintPrefs = document.getElementById('lint-prefs');
 	var shareBtn = document.getElementById('btn-share');
+	var importBtn = document.getElementById('btn-import');
+	var importFile = document.getElementById('import-file');
+	var exportJSONBtn = document.getElementById('btn-export-json');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -504,6 +507,48 @@ function wireUI() {
 	});
 
 	if (shareBtn) shareBtn.onclick = copyShareLink;
+
+	if (exportJSONBtn) {
+		exportJSONBtn.onclick = function () {
+			var text = JSON.stringify(exportSnapshot(), null, 2);
+			var ok = downloadBlob(activeFSMFileName('json'), text, 'application/json');
+			showToast(ok ? 'JSON downloaded' : 'Could not download JSON', ok ? null : 'error');
+		};
+	}
+
+	if (importBtn && importFile) {
+		importBtn.onclick = function () {
+			importFile.click();
+		};
+		importFile.onchange = function () {
+			var file = importFile.files && importFile.files[0];
+			if (!file) return;
+			var reader = new FileReader();
+			reader.onload = function () {
+				try {
+					var obj = JSON.parse(reader.result);
+					var err = validateSnapshot(obj);
+					if (err) {
+						showToast('Invalid: ' + err, 'error');
+						return;
+					}
+					flushHistory();
+					deserializeState(obj);
+					commitHistory();
+					draw();
+					showToast('Imported');
+				} catch (e) {
+					showToast('Could not parse JSON', 'error');
+				}
+				importFile.value = '';
+			};
+			reader.onerror = function () {
+				showToast('Could not read file', 'error');
+				importFile.value = '';
+			};
+			reader.readAsText(file);
+		};
+	}
 
 	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
 	if (shortcutsClose) shortcutsClose.onclick = closeShortcuts;

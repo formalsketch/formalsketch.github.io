@@ -1,5 +1,8 @@
 // Serialization helpers for the active FSM.
-// Reads/writes the active FSM via Workspace.
+// Reads/writes the active FSM via Workspace. See docs/format.md for the
+// import/export envelope.
+
+var SAVE_FORMAT = 'fsmStudio.v1';
 
 function serializeState() {
 	var data = { nodes: [], links: [] };
@@ -131,4 +134,36 @@ function flushHistory() {
 		__historyTimer = null;
 		History.push(snapshotJSON());
 	}
+}
+
+function exportSnapshot() {
+	var s = serializeState();
+	return {
+		format: SAVE_FORMAT,
+		createdAt: new Date().toISOString(),
+		nodes: s.nodes,
+		links: s.links,
+	};
+}
+
+function validateSnapshot(obj) {
+	if (!obj || typeof obj !== 'object') return 'not an object';
+	if (obj.format !== SAVE_FORMAT) {
+		return 'unexpected format ' + JSON.stringify(obj.format);
+	}
+	if (!Array.isArray(obj.nodes)) return 'nodes must be an array';
+	if (!Array.isArray(obj.links)) return 'links must be an array';
+	for (var i = 0; i < obj.nodes.length; i++) {
+		var n = obj.nodes[i];
+		if (typeof n.x !== 'number' || typeof n.y !== 'number') {
+			return 'node[' + i + '] missing numeric x/y';
+		}
+	}
+	for (var j = 0; j < obj.links.length; j++) {
+		var l = obj.links[j];
+		if (l.type !== 'Link' && l.type !== 'SelfLink' && l.type !== 'StartLink') {
+			return 'link[' + j + '] unknown type ' + JSON.stringify(l.type);
+		}
+	}
+	return null;
 }
