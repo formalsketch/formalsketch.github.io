@@ -440,9 +440,60 @@ window.onload = function () {
 
 		if (didChange) commitHistory();
 	};
+
+	// from upstream PR #44: touch -> mouse adapter. Single finger only; multi-touch
+	// falls through to the browser (pinch-zoom etc). preventDefault stops the
+	// 300ms ghost-click and page scrolling during canvas interaction.
+	function touchPos(t) {
+		return { clientX: t.clientX, clientY: t.clientY };
+	}
+
+	canvas.addEventListener(
+		'touchstart',
+		function (e) {
+			if (e.touches.length !== 1) return;
+			e.preventDefault();
+			var t = e.touches[0];
+			var now = Date.now();
+			if (
+				lastTap &&
+				now - lastTap.t < 300 &&
+				Math.abs(t.clientX - lastTap.x) < 30 &&
+				Math.abs(t.clientY - lastTap.y) < 30
+			) {
+				lastTap = null;
+				canvas.ondblclick(touchPos(t));
+				return;
+			}
+			lastTap = { t: now, x: t.clientX, y: t.clientY };
+			if (touchArrowMode) shift = true;
+			canvas.onmousedown(touchPos(t));
+		},
+		{ passive: false },
+	);
+
+	canvas.addEventListener(
+		'touchmove',
+		function (e) {
+			if (e.touches.length !== 1) return;
+			e.preventDefault();
+			canvas.onmousemove(touchPos(e.touches[0]));
+		},
+		{ passive: false },
+	);
+
+	canvas.addEventListener('touchend', function (e) {
+		var t = e.changedTouches && e.changedTouches[0];
+		if (t) canvas.onmouseup(touchPos(t));
+		if (touchArrowMode) shift = false;
+	});
 };
 
 var shift = false;
+// from upstream PR #44: touch has no shift key, so a UI toggle promotes single-finger
+// drag from "move" to "create arrow". Set by the arrow-mode button in ui.js.
+var touchArrowMode = false;
+var lastTap = null;
 
 function deleteSelected() {
 	if (selectedObject == null) return;
@@ -596,47 +647,16 @@ function crossBrowserKey(e) {
 	return e.which || e.keyCode;
 }
 
-function crossBrowserElementPos(e) {
-	e = e || window.event;
-	var obj = e.target || e.srcElement;
-	var x = 0,
-		y = 0;
-	while (obj.offsetParent) {
-		x += obj.offsetLeft;
-		y += obj.offsetTop;
-		obj = obj.offsetParent;
-	}
-	return { x: x, y: y };
-}
-
-function crossBrowserMousePos(e) {
-	e = e || window.event;
-	return {
-		x:
-			e.pageX ||
-			e.clientX +
-				document.body.scrollLeft +
-				document.documentElement.scrollLeft,
-		y:
-			e.pageY ||
-			e.clientY + document.body.scrollTop + document.documentElement.scrollTop,
-	};
-}
-
 function crossBrowserRelativeMousePos(e) {
-	var element = crossBrowserElementPos(e);
-	var mouse = crossBrowserMousePos(e);
-	var x = mouse.x - element.x;
-	var y = mouse.y - element.y;
-	// Account for CSS scaling of the canvas (width:100%) so mouse maps to buffer coords.
-	if (canvas) {
-		var rect = canvas.getBoundingClientRect();
-		if (rect.width && rect.height) {
-			x *= canvas.width / rect.width;
-			y *= canvas.height / rect.height;
-		}
-	}
-	return { x: x, y: y };
+	// from upstream PR #44: use getBoundingClientRect so coords stay correct when
+	// the canvas is CSS-scaled (width:100%, responsive layout, mobile zoom).
+	var rect = canvas.getBoundingClientRect();
+	var sx = rect.width ? canvas.width / rect.width : 1;
+	var sy = rect.height ? canvas.height / rect.height : 1;
+	return {
+		x: (e.clientX - rect.left) * sx,
+		y: (e.clientY - rect.top) * sy,
+	};
 }
 
 function saveAsPNG() {

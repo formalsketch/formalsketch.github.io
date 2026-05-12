@@ -346,6 +346,12 @@
         border: 1px solid var(--border);
         border-radius: 12px;
         width: 100%;
+        max-width: 100%;
+        /* from upstream PR #44: aspect-ratio keeps the 800x600 buffer's shape
+           on every viewport without resizing the drawing buffer. */
+        aspect-ratio: 4 / 3;
+        height: auto;
+        touch-action: none;
         transition:
           background 0.15s,
           border-color 0.15s;
@@ -353,6 +359,35 @@
 
       .canvas-wrap {
         overflow-x: auto;
+      }
+
+      /* from upstream PR #44: floating arrow-mode toggle shown only when the
+         primary input is a touchscreen (no hover, coarse pointer). */
+      .arrow-mode {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 900;
+        display: none;
+        background: var(--accent);
+        color: var(--accent-text);
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        cursor: pointer;
+      }
+      .arrow-mode.on {
+        background: #2c7be5;
+        color: #fff;
+      }
+      @media (hover: none), (pointer: coarse) {
+        .arrow-mode {
+          display: inline-block;
+        }
       }
 
       .toast {
@@ -564,6 +599,14 @@
         .fsm-list {
           max-height: 200px;
         }
+        /* from upstream PR #44: inline usage tips waste vertical space on
+           phones; same content lives in the help modal behind the ? button. */
+        .help {
+          display: none;
+        }
+        .toolbar .current-name {
+          max-width: 120px;
+        }
       }
     </style>
     <script src="fsm.js"></script>
@@ -700,6 +743,15 @@
         >Iman Mohammadi</a
       >.
     </footer>
+
+    <button
+      class="arrow-mode"
+      id="btn-arrow-mode"
+      aria-pressed="false"
+      title="Toggle arrow mode (touch)"
+    >
+      Arrow: off
+    </button>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

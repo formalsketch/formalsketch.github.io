@@ -17,6 +17,7 @@ function wireUI() {
 	var shortcutsClose = document.getElementById('btn-close-shortcuts');
 	var shortcutsBody = document.getElementById('shortcuts-body');
 	var latexModeSelect = document.getElementById('latex-mode');
+	var arrowModeBtn = document.getElementById('btn-arrow-mode');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -173,9 +174,40 @@ function wireUI() {
 	History.onChange(updateToolbar);
 
 	// from upstream PR #39: shortcuts help modal, populated lazily from
-	// LATEX_SHORTCUTS so the table stays the single source of truth.
+	// LATEX_SHORTCUTS so the table stays the single source of truth. On mobile
+	// the inline help block is hidden, so we also list canvas gestures here.
 	function populateShortcuts() {
 		if (!shortcutsBody || shortcutsBody.firstChild) return;
+
+		var gestures = document.createElement('div');
+		gestures.className = 'shortcut-cat';
+		var gh = document.createElement('h3');
+		gh.textContent = 'Canvas';
+		gestures.appendChild(gh);
+		var glist = document.createElement('ul');
+		glist.style.margin = '0';
+		glist.style.paddingLeft = '18px';
+		var tips = [
+			['Add a state', 'double-click empty canvas (or double-tap on touch)'],
+			['Add an arrow', 'shift-drag, or use the arrow-mode toggle on touch'],
+			['Move', 'drag any state or arrow'],
+			['Delete', 'select then press Delete, or backspace when label is empty'],
+			['Accept state', 'double-click an existing state'],
+			['Undo / Redo', 'Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z'],
+		];
+		for (var g = 0; g < tips.length; g++) {
+			var li = document.createElement('li');
+			li.style.fontSize = '13px';
+			li.style.margin = '4px 0';
+			var b = document.createElement('b');
+			b.textContent = tips[g][0] + ': ';
+			li.appendChild(b);
+			li.appendChild(document.createTextNode(tips[g][1]));
+			glist.appendChild(li);
+		}
+		gestures.appendChild(glist);
+		shortcutsBody.appendChild(gestures);
+
 		for (var i = 0; i < LATEX_SHORTCUTS.length; i++) {
 			var cat = LATEX_SHORTCUTS[i];
 			var section = document.createElement('div');
@@ -227,6 +259,20 @@ function wireUI() {
 		};
 	}
 
+	// from upstream PR #44: touch arrow-mode toggle. Single-finger drag normally
+	// moves; with arrow mode on, the touch handlers fake shift so it creates a link.
+	if (arrowModeBtn) {
+		arrowModeBtn.onclick = function () {
+			touchArrowMode = !touchArrowMode;
+			arrowModeBtn.classList.toggle('on', touchArrowMode);
+			arrowModeBtn.setAttribute(
+				'aria-pressed',
+				touchArrowMode ? 'true' : 'false',
+			);
+			arrowModeBtn.textContent = touchArrowMode ? 'Arrow: on' : 'Arrow: off';
+		};
+	}
+
 	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
 	if (shortcutsClose) shortcutsClose.onclick = closeShortcuts;
 	if (shortcutsModal) {
@@ -243,6 +289,19 @@ function wireUI() {
 			closeShortcuts();
 		}
 	});
+
+	// from upstream PR #44: keep the canvas in sync with its parent on orientation
+	// change / window resize. Drawing buffer stays 800x600; the CSS aspect-ratio
+	// handles visual scaling, this just forces a repaint so theme transitions and
+	// any in-flight selection redraw cleanly.
+	if (typeof ResizeObserver !== 'undefined') {
+		var wrap = document.querySelector('.canvas-wrap');
+		if (wrap) {
+			new ResizeObserver(function () {
+				draw();
+			}).observe(wrap);
+		}
+	}
 
 	renderSidebar();
 	updateTitle();
