@@ -1,0 +1,16 @@
+{
+	"name": "formalsketch",
+	"version": "0.1.0",
+	"description": "Browser-based finite state machine designer with multi-FSM workspaces, themes, and undo/redo. Fork of evanw/fsm.",
+	"private": true,
+	"license": "MIT",
+	"scripts": {
+		"build": "node build.js",
+		"watch": "node build.js --watch",
+		"lint": "prettier --check \"src/**/*.js\" build.js",
+		"format": "prettier --write \"src/**/*.js\" build.js"
+	},
+	"devDependencies": {
+		"prettier": "^3.3.3"
+	}
+}
