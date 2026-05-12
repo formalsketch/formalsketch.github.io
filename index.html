@@ -713,6 +713,57 @@
         background: var(--accent-hover);
       }
 
+      .nl-key-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .nl-key-row input {
+        flex: 1;
+        background: var(--textarea-bg);
+        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 6px 10px;
+        font:
+          12px/1.4 ui-monospace,
+          Consolas,
+          monospace;
+      }
+      .nl-key-warning {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+      }
+      .nl-desc {
+        width: 100%;
+        min-height: 80px;
+        background: var(--textarea-bg);
+        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 13px;
+        resize: vertical;
+      }
+      .nl-response {
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: var(--hover-bg);
+        border-radius: 7px;
+        font-size: 13px;
+        min-height: 40px;
+        white-space: pre-wrap;
+      }
+      .nl-response.empty {
+        color: var(--text-muted);
+      }
+      .nl-busy {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
       .help {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -887,6 +938,9 @@
           <button id="btn-minimize" title="Minimize DFA (partition refinement)">
             Minimize
           </button>
+          <button id="btn-nl" title="Generate or describe an FSM in plain English">
+            Generate...
+          </button>
           <button id="btn-simulate" title="Simulate input on this FSM">
             Simulate
           </button>
@@ -1013,6 +1067,52 @@
           <button id="btn-close-shortcuts" aria-label="Close">×</button>
         </header>
         <div class="modal-body" id="shortcuts-body"></div>
+      </div>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="nl-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nl-title"
+    >
+      <div class="modal">
+        <header>
+          <h2 id="nl-title">Generate from text</h2>
+          <button id="btn-close-nl" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body">
+          <div class="nl-key-row">
+            <input
+              type="password"
+              id="nl-key"
+              placeholder="API key"
+              autocomplete="off"
+            />
+            <button id="nl-key-save">Save</button>
+          </div>
+          <div class="nl-key-warning">
+            Stored locally in your browser. Anyone with access to this browser
+            can read it. Do not share a URL that has the key embedded.
+          </div>
+          <label for="nl-desc" style="font-size: 12px; color: var(--text-muted)">
+            Describe an FSM in plain English
+          </label>
+          <textarea
+            class="nl-desc"
+            id="nl-desc"
+            placeholder="e.g. an FSM that accepts binary strings with an even number of 1s"
+          ></textarea>
+          <div class="nl-response empty" id="nl-response">
+            Responses will appear here.
+          </div>
+        </div>
+        <div class="regex-actions">
+          <button id="nl-generate" class="primary">Generate as new FSM</button>
+          <button id="nl-describe">Describe current FSM</button>
+        </div>
       </div>
     </div>
 

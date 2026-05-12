@@ -45,6 +45,15 @@ function wireUI() {
 	var regexReplaceBtn = document.getElementById('regex-replace');
 	var toDFABtn = document.getElementById('btn-to-dfa');
 	var minimizeBtn = document.getElementById('btn-minimize');
+	var nlBtn = document.getElementById('btn-nl');
+	var nlModal = document.getElementById('nl-modal');
+	var nlClose = document.getElementById('btn-close-nl');
+	var nlKeyInput = document.getElementById('nl-key');
+	var nlKeySave = document.getElementById('nl-key-save');
+	var nlDesc = document.getElementById('nl-desc');
+	var nlGenerateBtn = document.getElementById('nl-generate');
+	var nlDescribeBtn = document.getElementById('nl-describe');
+	var nlResponse = document.getElementById('nl-response');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -551,7 +560,9 @@ function wireUI() {
 		var text = regexInput.value;
 		if (!text) {
 			regexError.textContent = '';
-			regexPreview.getContext('2d').clearRect(0, 0, regexPreview.width, regexPreview.height);
+			regexPreview
+				.getContext('2d')
+				.clearRect(0, 0, regexPreview.width, regexPreview.height);
 			return;
 		}
 		try {
@@ -571,7 +582,10 @@ function wireUI() {
 			}
 		};
 	}
-	if (regexClose) regexClose.onclick = function () { regexModal.hidden = true; };
+	if (regexClose)
+		regexClose.onclick = function () {
+			regexModal.hidden = true;
+		};
 	if (regexModal) {
 		regexModal.onclick = function (e) {
 			if (e.target === regexModal) regexModal.hidden = true;
@@ -625,10 +639,103 @@ function wireUI() {
 					)
 				)
 					return;
-				applyFSMJsonAsNew(result, 'DFA of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+				applyFSMJsonAsNew(
+					result,
+					'DFA of ' +
+						(Workspace.getActive() ? Workspace.getActive().name : 'FSM'),
+				);
 			} catch (e) {
 				showToast(e.message, 'error');
 			}
+		};
+	}
+
+	function setNLResponse(text, busy) {
+		if (!nlResponse) return;
+		nlResponse.textContent = text || 'Responses will appear here.';
+		nlResponse.classList.toggle('empty', !text);
+		var modal = nlModal && nlModal.querySelector('.modal');
+		if (modal) modal.classList.toggle('nl-busy', !!busy);
+	}
+
+	function syncNLKey() {
+		if (nlKeyInput) nlKeyInput.value = getModelKey();
+	}
+
+	if (nlBtn && nlModal) {
+		nlBtn.onclick = function () {
+			syncNLKey();
+			nlModal.hidden = false;
+			if (nlDesc) nlDesc.focus();
+		};
+	}
+	if (nlClose)
+		nlClose.onclick = function () {
+			nlModal.hidden = true;
+		};
+	if (nlModal) {
+		nlModal.onclick = function (e) {
+			if (e.target === nlModal) nlModal.hidden = true;
+		};
+	}
+	if (nlKeySave) {
+		nlKeySave.onclick = function () {
+			setModelKey(nlKeyInput.value.trim());
+			showToast(nlKeyInput.value.trim() ? 'Key saved' : 'Key cleared');
+		};
+	}
+	if (nlGenerateBtn) {
+		nlGenerateBtn.onclick = function () {
+			if (!getModelKey()) {
+				setNLResponse(
+					'Add your API key above to enable natural-language features.',
+				);
+				if (nlKeyInput) nlKeyInput.focus();
+				return;
+			}
+			var desc = nlDesc ? nlDesc.value.trim() : '';
+			if (!desc) {
+				setNLResponse('Describe the FSM you want generated.');
+				return;
+			}
+			setNLResponse('Generating...', true);
+			generateFSMFromText(desc).then(
+				function (json) {
+					setNLResponse(
+						'Generated ' +
+							json.nodes.length +
+							' states; inserted as a new FSM.',
+					);
+					applyFSMJsonAsNew(json, 'NL: ' + desc.slice(0, 40));
+				},
+				function (err) {
+					setNLResponse(String(err.message || err));
+				},
+			);
+		};
+	}
+	if (nlDescribeBtn) {
+		nlDescribeBtn.onclick = function () {
+			if (!getModelKey()) {
+				setNLResponse(
+					'Add your API key above to enable natural-language features.',
+				);
+				if (nlKeyInput) nlKeyInput.focus();
+				return;
+			}
+			if (!nodes.length) {
+				setNLResponse('Draw or load an FSM first.');
+				return;
+			}
+			setNLResponse('Reading the diagram...', true);
+			describeFSM(currentFSMAsJson()).then(
+				function (text) {
+					setNLResponse(text);
+				},
+				function (err) {
+					setNLResponse(String(err.message || err));
+				},
+			);
 		};
 	}
 
@@ -646,7 +753,11 @@ function wireUI() {
 					)
 				)
 					return;
-				applyFSMJsonAsNew(result, 'Min of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+				applyFSMJsonAsNew(
+					result,
+					'Min of ' +
+						(Workspace.getActive() ? Workspace.getActive().name : 'FSM'),
+				);
 			} catch (e) {
 				showToast(e.message, 'error');
 			}
