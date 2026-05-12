@@ -3,7 +3,7 @@
 import os, sys, time
 
 SRC = './src'
-OUT = './www/fsm.js'
+OUT = './fsm.js'
 
 def sources():
 	files = []

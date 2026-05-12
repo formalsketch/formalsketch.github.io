@@ -31,11 +31,17 @@ jobs:
 
       - name: Sanity-check bundle
         run: |
-          if [ ! -s www/fsm.js ]; then
-            echo "::error::www/fsm.js is missing or empty"
+          if [ ! -s fsm.js ]; then
+            echo "::error::fsm.js is missing or empty"
             exit 1
           fi
-          node --check www/fsm.js
+          node --check fsm.js
+
+      - name: Stage site
+        run: |
+          mkdir _site
+          cp index.html fsm.js .nojekyll _site/
+          cp -r docs _site/docs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -43,7 +49,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: www
+          path: _site
 
   deploy:
     needs: build

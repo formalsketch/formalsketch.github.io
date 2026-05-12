@@ -2,7 +2,7 @@
 // / StartLink constructors and runs simulate() against it.
 
 const fs = require('fs');
-const code = fs.readFileSync('www/fsm.js', 'utf8');
+const code = fs.readFileSync('fsm.js', 'utf8');
 
 global.document = {
 	documentElement: {},

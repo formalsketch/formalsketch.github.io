@@ -13,16 +13,19 @@ There are no runtime dependencies, and `package.json` only declares `prettier` a
 ## Project layout
 
 ```
-src/                Hand-written source, concatenated into www/fsm.js
+src/                Hand-written source, concatenated into fsm.js
   _license.js
   elements/         Node, Link, SelfLink, StartLink, TemporaryLink
   export_as/        SVG and LaTeX exporters
-  main/             fsm, save, history, theme, workspace, io, ui, math
-www/                What gets deployed to GitHub Pages
-  index.html        Loads fsm.js
-  fsm.js            Build output (gitignored)
+  main/             fsm, save, history, theme, workspace, io, ui, math,
+                    simulate, lint, share, regex_to_nfa, nfa_to_dfa,
+                    minimize, layout, ai
+index.html          Page entry, loaded as the GitHub Pages root
+fsm.js              Build output at repo root (gitignored)
 build.js            Node builder
 build.py            Python 3 builder (functionally identical)
+docs/               Schema docs (format.md) and screenshots
+tests/              Node smoke tests and one HTML harness
 ```
 
 Files in `src/` are concatenated in deterministic (sorted, forward-slash) order. There are no ES modules, no bundler, no transpiler.
@@ -30,20 +33,20 @@ Files in `src/` are concatenated in deterministic (sorted, forward-slash) order.
 ## Build
 
 ```bash
-node build.js            # one-shot build to www/fsm.js
+node build.js            # one-shot build to ./fsm.js
 node build.js --watch    # rebuild on source changes
 npm run build            # same as `node build.js`
 npm run watch            # same as `node build.js --watch`
 python build.py          # alternative builder; same output bytes
 ```
 
-Open `www/index.html` directly in a browser, or serve `www/` with any static server.
+Open `./index.html` directly in a browser, or serve `./` with any static server.
 
 ## Contribution flow
 
 1. Fork and create a branch off `main`.
-2. Make your change in `src/`. Do not edit `www/fsm.js` directly — it is regenerated.
-3. Run `node build.js` and reload `www/index.html`. Verify in the browser that the four core gestures still work:
+2. Make your change in `src/`. Do not edit `./fsm.js` directly — it is regenerated.
+3. Run `node build.js` and reload `./index.html`. Verify in the browser that the four core gestures still work:
    - **Double-click** the canvas to add a state
    - **Shift-drag** to add an arrow
    - **Drag** to move

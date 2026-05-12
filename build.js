@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SRC = path.join(__dirname, 'src');
-const OUT = path.join(__dirname, 'www', 'fsm.js');
+const OUT = path.join(__dirname, 'fsm.js');
 
 function sources() {
 	const out = [];

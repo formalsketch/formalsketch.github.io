@@ -28,7 +28,7 @@ cd formalsketch.github.io
 node build.js
 ```
 
-Open `www/index.html` in your browser. To rebuild on save, run `node build.js --watch`. A Python 3 builder (`python build.py`) is also provided and produces byte-identical output.
+Open `index.html` in your browser. To rebuild on save, run `node build.js --watch`. A Python 3 builder (`python build.py`) is also provided and produces byte-identical output.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
