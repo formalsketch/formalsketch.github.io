@@ -12,6 +12,10 @@ function wireUI() {
 	var latexBtn = document.getElementById('btn-latex');
 	var titleEl = document.getElementById('current-fsm-name');
 	var themeBtn = document.getElementById('btn-theme');
+	var shortcutsBtn = document.getElementById('btn-shortcuts');
+	var shortcutsModal = document.getElementById('shortcuts-modal');
+	var shortcutsClose = document.getElementById('btn-close-shortcuts');
+	var shortcutsBody = document.getElementById('shortcuts-body');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -166,6 +170,62 @@ function wireUI() {
 		updateTitle();
 	});
 	History.onChange(updateToolbar);
+
+	// from upstream PR #39: shortcuts help modal, populated lazily from
+	// LATEX_SHORTCUTS so the table stays the single source of truth.
+	function populateShortcuts() {
+		if (!shortcutsBody || shortcutsBody.firstChild) return;
+		for (var i = 0; i < LATEX_SHORTCUTS.length; i++) {
+			var cat = LATEX_SHORTCUTS[i];
+			var section = document.createElement('div');
+			section.className = 'shortcut-cat';
+			var h = document.createElement('h3');
+			h.textContent = cat.name;
+			section.appendChild(h);
+			var grid = document.createElement('div');
+			grid.className = 'shortcut-grid';
+			for (var j = 0; j < cat.entries.length; j++) {
+				var row = document.createElement('div');
+				var kbd = document.createElement('kbd');
+				kbd.textContent = cat.entries[j][0];
+				row.appendChild(kbd);
+				row.appendChild(document.createTextNode(cat.entries[j][1]));
+				grid.appendChild(row);
+			}
+			section.appendChild(grid);
+			shortcutsBody.appendChild(section);
+		}
+	}
+
+	function openShortcuts() {
+		if (!shortcutsModal) return;
+		populateShortcuts();
+		shortcutsModal.hidden = false;
+		// focus the close button so canvasHasFocus() returns false and stray
+		// keystrokes do not type into the selected node behind the modal.
+		if (shortcutsClose) shortcutsClose.focus();
+	}
+
+	function closeShortcuts() {
+		if (shortcutsModal) shortcutsModal.hidden = true;
+	}
+
+	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
+	if (shortcutsClose) shortcutsClose.onclick = closeShortcuts;
+	if (shortcutsModal) {
+		shortcutsModal.onclick = function (e) {
+			if (e.target === shortcutsModal) closeShortcuts();
+		};
+	}
+	document.addEventListener('keydown', function (e) {
+		if (
+			e.key === 'Escape' &&
+			shortcutsModal &&
+			shortcutsModal.hidden === false
+		) {
+			closeShortcuts();
+		}
+	});
 
 	renderSidebar();
 	updateTitle();

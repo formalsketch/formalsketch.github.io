@@ -1,52 +1,158 @@
-var greekLetterNames = [
-	'Alpha',
-	'Beta',
-	'Gamma',
-	'Delta',
-	'Epsilon',
-	'Zeta',
-	'Eta',
-	'Theta',
-	'Iota',
-	'Kappa',
-	'Lambda',
-	'Mu',
-	'Nu',
-	'Xi',
-	'Omicron',
-	'Pi',
-	'Rho',
-	'Sigma',
-	'Tau',
-	'Upsilon',
-	'Phi',
-	'Chi',
-	'Psi',
-	'Omega',
+// from upstream PR #39: expanded shortcut table covering ops, set theory, logic,
+// arrows. Kept as a category-grouped list so ui.js can render the help modal
+// straight from it without a second copy.
+var LATEX_SHORTCUTS = [
+	{
+		name: 'Greek (lowercase)',
+		entries: [
+			['\\alpha', 'α'],
+			['\\beta', 'β'],
+			['\\gamma', 'γ'],
+			['\\delta', 'δ'],
+			['\\epsilon', 'ε'],
+			['\\zeta', 'ζ'],
+			['\\eta', 'η'],
+			['\\theta', 'θ'],
+			['\\iota', 'ι'],
+			['\\kappa', 'κ'],
+			['\\lambda', 'λ'],
+			['\\mu', 'μ'],
+			['\\nu', 'ν'],
+			['\\xi', 'ξ'],
+			['\\omicron', 'ο'],
+			['\\pi', 'π'],
+			['\\rho', 'ρ'],
+			['\\sigma', 'σ'],
+			['\\tau', 'τ'],
+			['\\upsilon', 'υ'],
+			['\\phi', 'φ'],
+			['\\chi', 'χ'],
+			['\\psi', 'ψ'],
+			['\\omega', 'ω'],
+		],
+	},
+	{
+		name: 'Greek (uppercase)',
+		entries: [
+			['\\Alpha', 'Α'],
+			['\\Beta', 'Β'],
+			['\\Gamma', 'Γ'],
+			['\\Delta', 'Δ'],
+			['\\Epsilon', 'Ε'],
+			['\\Zeta', 'Ζ'],
+			['\\Eta', 'Η'],
+			['\\Theta', 'Θ'],
+			['\\Iota', 'Ι'],
+			['\\Kappa', 'Κ'],
+			['\\Lambda', 'Λ'],
+			['\\Mu', 'Μ'],
+			['\\Nu', 'Ν'],
+			['\\Xi', 'Ξ'],
+			['\\Omicron', 'Ο'],
+			['\\Pi', 'Π'],
+			['\\Rho', 'Ρ'],
+			['\\Sigma', 'Σ'],
+			['\\Tau', 'Τ'],
+			['\\Upsilon', 'Υ'],
+			['\\Phi', 'Φ'],
+			['\\Chi', 'Χ'],
+			['\\Psi', 'Ψ'],
+			['\\Omega', 'Ω'],
+		],
+	},
+	{
+		name: 'Operators',
+		entries: [
+			['\\times', '×'],
+			['\\div', '÷'],
+			['\\pm', '±'],
+			['\\leq', '≤'],
+			['\\le', '≤'],
+			['\\geq', '≥'],
+			['\\ge', '≥'],
+			['\\neq', '≠'],
+			['\\ne', '≠'],
+			['\\approx', '≈'],
+			['\\infty', '∞'],
+			['\\sum', '∑'],
+			['\\prod', '∏'],
+			['\\int', '∫'],
+			['\\cdot', '·'],
+		],
+	},
+	{
+		name: 'Set theory',
+		entries: [
+			['\\cup', '∪'],
+			['\\cap', '∩'],
+			['\\subseteq', '⊆'],
+			['\\subset', '⊂'],
+			['\\supseteq', '⊇'],
+			['\\supset', '⊃'],
+			['\\notin', '∉'],
+			['\\in', '∈'],
+			['\\emptyset', '∅'],
+		],
+	},
+	{
+		name: 'Logic',
+		entries: [
+			['\\land', '∧'],
+			['\\lor', '∨'],
+			['\\neg', '¬'],
+			['\\forall', '∀'],
+			['\\exists', '∃'],
+			['\\Rightarrow', '⇒'],
+			['\\Leftrightarrow', '⇔'],
+		],
+	},
+	{
+		name: 'Arrows',
+		entries: [
+			['\\leftrightarrow', '↔'],
+			['\\rightarrow', '→'],
+			['\\leftarrow', '←'],
+			['\\to', '→'],
+			['\\gets', '←'],
+		],
+	},
+	{
+		name: 'Subscripts',
+		entries: [
+			['_0', '₀'],
+			['_1', '₁'],
+			['_2', '₂'],
+			['_3', '₃'],
+			['_4', '₄'],
+			['_5', '₅'],
+			['_6', '₆'],
+			['_7', '₇'],
+			['_8', '₈'],
+			['_9', '₉'],
+		],
+	},
 ];
 
+// Sort longest-first so \leq beats \le, \rightarrow beats \to, etc.
+var LATEX_SHORTCUT_RULES = (function () {
+	var flat = [];
+	for (var i = 0; i < LATEX_SHORTCUTS.length; i++) {
+		var entries = LATEX_SHORTCUTS[i].entries;
+		for (var j = 0; j < entries.length; j++) flat.push(entries[j]);
+	}
+	flat.sort(function (a, b) {
+		return b[0].length - a[0].length;
+	});
+	return flat.map(function (e) {
+		var pattern = e[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		return [new RegExp(pattern, 'g'), e[1]];
+	});
+})();
+
 function convertLatexShortcuts(text) {
-	// html greek characters
-	for (var i = 0; i < greekLetterNames.length; i++) {
-		var name = greekLetterNames[i];
-		text = text.replace(
-			new RegExp('\\\\' + name, 'g'),
-			String.fromCharCode(913 + i + (i > 16)),
-		);
-		text = text.replace(
-			new RegExp('\\\\' + name.toLowerCase(), 'g'),
-			String.fromCharCode(945 + i + (i > 16)),
-		);
+	for (var i = 0; i < LATEX_SHORTCUT_RULES.length; i++) {
+		text = text.replace(LATEX_SHORTCUT_RULES[i][0], LATEX_SHORTCUT_RULES[i][1]);
 	}
-
-	// subscripts
-	for (var i = 0; i < 10; i++) {
-		text = text.replace(
-			new RegExp('_' + i, 'g'),
-			String.fromCharCode(8320 + i),
-		);
-	}
-
 	return text;
 }
 

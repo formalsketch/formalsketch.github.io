@@ -374,6 +374,92 @@
         color: #fff;
       }
 
+      /* from upstream PR #39: shortcuts help modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 1100;
+      }
+      .modal-backdrop[hidden] {
+        display: none;
+      }
+      .modal {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        max-width: 720px;
+        width: 100%;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      }
+      .modal header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+      }
+      .modal h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .modal header button {
+        background: transparent;
+        border: 0;
+        color: var(--text-muted);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 4px;
+      }
+      .modal header button:hover {
+        color: var(--text-strong);
+      }
+      .modal-body {
+        padding: 16px 18px;
+        overflow-y: auto;
+      }
+      .shortcut-cat {
+        margin-bottom: 18px;
+      }
+      .shortcut-cat:last-child {
+        margin-bottom: 0;
+      }
+      .shortcut-cat h3 {
+        margin: 0 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .shortcut-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 4px 16px;
+        font-size: 13px;
+      }
+      .shortcut-grid kbd {
+        background: var(--kbd-bg);
+        border: 1px solid var(--kbd-border);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font:
+          11px/1 ui-monospace,
+          Consolas,
+          monospace;
+        color: var(--kbd-text);
+        margin-right: 8px;
+      }
+
       .help {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -531,6 +617,13 @@
           </button>
           <span class="sep"></span>
           <button id="btn-clear" title="Clear current FSM">Clear</button>
+          <button
+            id="btn-shortcuts"
+            title="LaTeX shortcuts"
+            aria-label="Show LaTeX shortcuts"
+          >
+            ?
+          </button>
           <span class="current-name" id="current-fsm-name"></span>
           <span class="spacer"></span>
           <button id="btn-theme" title="Theme">◐ Auto</button>
@@ -592,5 +685,22 @@
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div
+      class="modal-backdrop"
+      id="shortcuts-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcuts-title"
+    >
+      <div class="modal">
+        <header>
+          <h2 id="shortcuts-title">LaTeX shortcuts</h2>
+          <button id="btn-close-shortcuts" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body" id="shortcuts-body"></div>
+      </div>
+    </div>
   </body>
 </html>
