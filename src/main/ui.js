@@ -30,6 +30,7 @@ function wireUI() {
 	var lintClose = document.getElementById('btn-close-lint');
 	var lintBody = document.getElementById('lint-body');
 	var lintPrefs = document.getElementById('lint-prefs');
+	var shareBtn = document.getElementById('btn-share');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -501,6 +502,8 @@ function wireUI() {
 			lintModal.hidden = true;
 		}
 	});
+
+	if (shareBtn) shareBtn.onclick = copyShareLink;
 
 	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
 	if (shortcutsClose) shortcutsClose.onclick = closeShortcuts;

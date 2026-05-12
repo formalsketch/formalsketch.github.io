@@ -357,6 +357,7 @@ window.onload = function () {
 	if (typeof Theme !== 'undefined') Theme.init();
 	Workspace.init();
 	restoreBackup();
+	if (typeof maybeLoadFromHash === 'function') maybeLoadFromHash();
 	History.reset(snapshotJSON());
 
 	if (typeof wireUI === 'function') wireUI();
