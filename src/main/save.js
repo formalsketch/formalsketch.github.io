@@ -1,98 +1,134 @@
-function restoreBackup() {
-	if(!localStorage || !JSON) {
-		return;
-	}
+// Serialization helpers for the active FSM.
+// Reads/writes the active FSM via Workspace.
 
-	try {
-		var backup = JSON.parse(localStorage['fsm']);
+function serializeState() {
+  var data = { nodes: [], links: [] };
+  for (var i = 0; i < nodes.length; i++) {
+    var node = nodes[i];
+    data.nodes.push({
+      x: node.x,
+      y: node.y,
+      text: node.text,
+      isAcceptState: node.isAcceptState,
+    });
+  }
+  for (var i = 0; i < links.length; i++) {
+    var link = links[i];
+    var backupLink = null;
+    if (link instanceof SelfLink) {
+      backupLink = {
+        type: "SelfLink",
+        node: nodes.indexOf(link.node),
+        text: link.text,
+        anchorAngle: link.anchorAngle,
+      };
+    } else if (link instanceof StartLink) {
+      backupLink = {
+        type: "StartLink",
+        node: nodes.indexOf(link.node),
+        text: link.text,
+        deltaX: link.deltaX,
+        deltaY: link.deltaY,
+      };
+    } else if (link instanceof Link) {
+      backupLink = {
+        type: "Link",
+        nodeA: nodes.indexOf(link.nodeA),
+        nodeB: nodes.indexOf(link.nodeB),
+        text: link.text,
+        lineAngleAdjust: link.lineAngleAdjust,
+        parallelPart: link.parallelPart,
+        perpendicularPart: link.perpendicularPart,
+      };
+    }
+    if (backupLink) data.links.push(backupLink);
+  }
+  return data;
+}
 
-		for(var i = 0; i < backup.nodes.length; i++) {
-			var backupNode = backup.nodes[i];
-			var node = new Node(backupNode.x, backupNode.y);
-			node.isAcceptState = backupNode.isAcceptState;
-			node.text = backupNode.text;
-			nodes.push(node);
-		}
-		for(var i = 0; i < backup.links.length; i++) {
-			var backupLink = backup.links[i];
-			var link = null;
-			if(backupLink.type == 'SelfLink') {
-				link = new SelfLink(nodes[backupLink.node]);
-				link.anchorAngle = backupLink.anchorAngle;
-				link.text = backupLink.text;
-			} else if(backupLink.type == 'StartLink') {
-				link = new StartLink(nodes[backupLink.node]);
-				link.deltaX = backupLink.deltaX;
-				link.deltaY = backupLink.deltaY;
-				link.text = backupLink.text;
-			} else if(backupLink.type == 'Link') {
-				link = new Link(nodes[backupLink.nodeA], nodes[backupLink.nodeB]);
-				link.parallelPart = backupLink.parallelPart;
-				link.perpendicularPart = backupLink.perpendicularPart;
-				link.text = backupLink.text;
-				link.lineAngleAdjust = backupLink.lineAngleAdjust;
-			}
-			if(link != null) {
-				links.push(link);
-			}
-		}
-	} catch(e) {
-		localStorage['fsm'] = '';
-	}
+function deserializeState(data) {
+  nodes.length = 0;
+  links.length = 0;
+  selectedObject = null;
+  if (!data || !data.nodes) return;
+  for (var i = 0; i < data.nodes.length; i++) {
+    var bn = data.nodes[i];
+    var node = new Node(bn.x, bn.y);
+    node.isAcceptState = !!bn.isAcceptState;
+    node.text = bn.text || "";
+    nodes.push(node);
+  }
+  for (var i = 0; i < data.links.length; i++) {
+    var bl = data.links[i];
+    var link = null;
+    if (bl.type === "SelfLink") {
+      link = new SelfLink(nodes[bl.node]);
+      link.anchorAngle = bl.anchorAngle;
+      link.text = bl.text;
+    } else if (bl.type === "StartLink") {
+      link = new StartLink(nodes[bl.node]);
+      link.deltaX = bl.deltaX;
+      link.deltaY = bl.deltaY;
+      link.text = bl.text;
+    } else if (bl.type === "Link") {
+      link = new Link(nodes[bl.nodeA], nodes[bl.nodeB]);
+      link.parallelPart = bl.parallelPart;
+      link.perpendicularPart = bl.perpendicularPart;
+      link.text = bl.text;
+      link.lineAngleAdjust = bl.lineAngleAdjust;
+    }
+    if (link) links.push(link);
+  }
+}
+
+function snapshotJSON() {
+  return JSON.stringify(serializeState());
+}
+
+function loadSnapshotJSON(json) {
+  if (!json) return;
+  try {
+    deserializeState(JSON.parse(json));
+  } catch (e) {}
 }
 
 function saveBackup() {
-	if(!localStorage || !JSON) {
-		return;
-	}
+  if (typeof localStorage === "undefined" || !JSON) return;
+  if (!Workspace.getActiveId()) return;
+  Workspace.saveActive(serializeState());
+}
 
-	var backup = {
-		'nodes': [],
-		'links': [],
-	};
-	for(var i = 0; i < nodes.length; i++) {
-		var node = nodes[i];
-		var backupNode = {
-			'x': node.x,
-			'y': node.y,
-			'text': node.text,
-			'isAcceptState': node.isAcceptState,
-		};
-		backup.nodes.push(backupNode);
-	}
-	for(var i = 0; i < links.length; i++) {
-		var link = links[i];
-		var backupLink = null;
-		if(link instanceof SelfLink) {
-			backupLink = {
-				'type': 'SelfLink',
-				'node': nodes.indexOf(link.node),
-				'text': link.text,
-				'anchorAngle': link.anchorAngle,
-			};
-		} else if(link instanceof StartLink) {
-			backupLink = {
-				'type': 'StartLink',
-				'node': nodes.indexOf(link.node),
-				'text': link.text,
-				'deltaX': link.deltaX,
-				'deltaY': link.deltaY,
-			};
-		} else if(link instanceof Link) {
-			backupLink = {
-				'type': 'Link',
-				'nodeA': nodes.indexOf(link.nodeA),
-				'nodeB': nodes.indexOf(link.nodeB),
-				'text': link.text,
-				'lineAngleAdjust': link.lineAngleAdjust,
-				'parallelPart': link.parallelPart,
-				'perpendicularPart': link.perpendicularPart,
-			};
-		}
-		if(backupLink != null) {
-			backup.links.push(backupLink);
-		}
-	}
+function restoreBackup() {
+  if (typeof localStorage === "undefined" || !JSON) return;
+  if (!Workspace.getActiveId()) return;
+  deserializeState(Workspace.loadActive());
+}
 
-	localStorage['fsm'] = JSON.stringify(backup);
+// History commit helpers — defined here so other files can call them after mutations.
+var __historyTimer = null;
+
+function commitHistory() {
+  if (__historyTimer) {
+    clearTimeout(__historyTimer);
+    __historyTimer = null;
+  }
+  saveBackup();
+  History.push(snapshotJSON());
+}
+
+function commitHistoryDebounced() {
+  if (__historyTimer) clearTimeout(__historyTimer);
+  saveBackup(); // persist data immediately; only history push is debounced
+  __historyTimer = setTimeout(function () {
+    History.push(snapshotJSON());
+    __historyTimer = null;
+  }, 400);
+}
+
+function flushHistory() {
+  if (__historyTimer) {
+    clearTimeout(__historyTimer);
+    __historyTimer = null;
+    History.push(snapshotJSON());
+  }
 }
