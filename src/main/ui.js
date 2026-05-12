@@ -318,8 +318,10 @@ function wireUI() {
 		if (result.error) {
 			setSimStatus(result.error, 'reject');
 		} else {
-			setSimStatus(result.accepted ? 'Accepted' : 'Rejected',
-				result.accepted ? 'accept' : 'reject');
+			setSimStatus(
+				result.accepted ? 'Accepted' : 'Rejected',
+				result.accepted ? 'accept' : 'reject',
+			);
 		}
 		stepIndex = result.path.length;
 		draw();
@@ -329,7 +331,13 @@ function wireUI() {
 		if (stepIndex === 0 || !simulationState) {
 			var starts = getStartStates(nodes, links);
 			if (starts.length !== 1) {
-				simulationState = { active: [], lastLink: null, accepted: false, error: starts.length === 0 ? 'no start state' : 'multiple start states' };
+				simulationState = {
+					active: [],
+					lastLink: null,
+					accepted: false,
+					error:
+						starts.length === 0 ? 'no start state' : 'multiple start states',
+				};
 				setSimStatus(simulationState.error, 'reject');
 				draw();
 				return;
@@ -352,14 +360,21 @@ function wireUI() {
 				if (n && n.isAcceptState) accepted = true;
 			}
 			simulationState.accepted = accepted;
-			setSimStatus(accepted ? 'Accepted' : 'Rejected', accepted ? 'accept' : 'reject');
+			setSimStatus(
+				accepted ? 'Accepted' : 'Rejected',
+				accepted ? 'accept' : 'reject',
+			);
 			draw();
 			return;
 		}
 		var sym = input.charAt(stepIndex);
 		var step = simulateStep(simulationState.active, sym, nodes, links);
 		if (step.states.length === 0) {
-			simulationState.error = 'no transition for ' + JSON.stringify(sym) + ' at step ' + (stepIndex + 1);
+			simulationState.error =
+				'no transition for ' +
+				JSON.stringify(sym) +
+				' at step ' +
+				(stepIndex + 1);
 			setSimStatus(simulationState.error, 'reject');
 			draw();
 			return;
@@ -367,7 +382,15 @@ function wireUI() {
 		simulationState.active = step.states;
 		simulationState.lastLink = step.links[0] || null;
 		stepIndex++;
-		setSimStatus('step ' + stepIndex + ' of ' + input.length + ' (on ' + JSON.stringify(sym) + ')');
+		setSimStatus(
+			'step ' +
+				stepIndex +
+				' of ' +
+				input.length +
+				' (on ' +
+				JSON.stringify(sym) +
+				')',
+		);
 		draw();
 		// fade the transition highlight after a moment
 		setTimeout(function () {
@@ -494,7 +517,10 @@ function wireUI() {
 			if (lintClose) lintClose.focus();
 		};
 	}
-	if (lintClose) lintClose.onclick = function () { lintModal.hidden = true; };
+	if (lintClose)
+		lintClose.onclick = function () {
+			lintModal.hidden = true;
+		};
 	if (lintModal) {
 		lintModal.onclick = function (e) {
 			if (e.target === lintModal) lintModal.hidden = true;
@@ -511,8 +537,15 @@ function wireUI() {
 	if (exportJSONBtn) {
 		exportJSONBtn.onclick = function () {
 			var text = JSON.stringify(exportSnapshot(), null, 2);
-			var ok = downloadBlob(activeFSMFileName('json'), text, 'application/json');
-			showToast(ok ? 'JSON downloaded' : 'Could not download JSON', ok ? null : 'error');
+			var ok = downloadBlob(
+				activeFSMFileName('json'),
+				text,
+				'application/json',
+			);
+			showToast(
+				ok ? 'JSON downloaded' : 'Could not download JSON',
+				ok ? null : 'error',
+			);
 		};
 	}
 

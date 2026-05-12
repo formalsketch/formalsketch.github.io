@@ -10,10 +10,7 @@ function shareEncode(json) {
 	var bytes = new TextEncoder().encode(json);
 	var bin = '';
 	for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-	return btoa(bin)
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_')
-		.replace(/=+$/, '');
+	return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function shareDecode(s) {
@@ -27,13 +24,18 @@ function shareDecode(s) {
 
 function shareURL() {
 	var loc = window.location;
-	return loc.origin + loc.pathname + loc.search + '#' + shareEncode(snapshotJSON());
+	return (
+		loc.origin + loc.pathname + loc.search + '#' + shareEncode(snapshotJSON())
+	);
 }
 
 function copyShareLink() {
 	var url = shareURL();
 	Promise.resolve(copyToClipboard(url)).then(function (ok) {
-		showToast(ok ? 'Share link copied' : 'Could not copy link', ok ? null : 'error');
+		showToast(
+			ok ? 'Share link copied' : 'Could not copy link',
+			ok ? null : 'error',
+		);
 	});
 }
 
@@ -43,7 +45,11 @@ function maybeLoadFromHash() {
 	// Strip the hash up front so a refused or failed load does not re-prompt
 	// on the next reload.
 	try {
-		history.replaceState(null, '', window.location.pathname + window.location.search);
+		history.replaceState(
+			null,
+			'',
+			window.location.pathname + window.location.search,
+		);
 	} catch (e) {
 		window.location.hash = '';
 	}
