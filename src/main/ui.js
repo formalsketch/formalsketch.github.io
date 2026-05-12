@@ -43,6 +43,8 @@ function wireUI() {
 	var regexPreview = document.getElementById('regex-preview');
 	var regexInsertBtn = document.getElementById('regex-insert');
 	var regexReplaceBtn = document.getElementById('regex-replace');
+	var toDFABtn = document.getElementById('btn-to-dfa');
+	var minimizeBtn = document.getElementById('btn-minimize');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -600,6 +602,53 @@ function wireUI() {
 				regexModal.hidden = true;
 			} catch (e) {
 				regexError.textContent = e.message;
+			}
+		};
+	}
+
+	function currentFSMAsJson() {
+		var s = serializeState();
+		return { format: SAVE_FORMAT, nodes: s.nodes, links: s.links };
+	}
+
+	if (toDFABtn) {
+		toDFABtn.onclick = function () {
+			try {
+				var result = nfaToDFA(currentFSMAsJson());
+				if (
+					!confirm(
+						'Convert: ' +
+							nodes.length +
+							' states -> ' +
+							result.nodes.length +
+							' states. Create as a new FSM in the workspace?',
+					)
+				)
+					return;
+				applyFSMJsonAsNew(result, 'DFA of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+			} catch (e) {
+				showToast(e.message, 'error');
+			}
+		};
+	}
+
+	if (minimizeBtn) {
+		minimizeBtn.onclick = function () {
+			try {
+				var result = minimize(currentFSMAsJson());
+				if (
+					!confirm(
+						'Minimize: ' +
+							nodes.length +
+							' states -> ' +
+							result.nodes.length +
+							' states. Create as a new FSM?',
+					)
+				)
+					return;
+				applyFSMJsonAsNew(result, 'Min of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+			} catch (e) {
+				showToast(e.message, 'error');
 			}
 		};
 	}

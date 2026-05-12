@@ -1963,6 +1963,286 @@ function fixed(number, digits) {
 	return number.toFixed(digits).replace(/0+$/, '').replace(/\.$/, '');
 }
 
+// DFA minimization via partition refinement (Moore's). For our typical sizes
+// the n^2 inner loop is fine; if it ever bites we'd switch to Hopcroft.
+//
+// Steps:
+//   1. Inflate the input as a DFA. Reject NFA-shaped inputs (nondeterministic
+//      transitions, epsilon edges).
+//   2. Initial partition = { accept states, non-accept states }.
+//   3. Refine: two states are equivalent iff for every symbol c their
+//      transitions land in the same partition. Keep splitting until stable.
+
+function minimize(dfaJson) {
+	var dfa = inflateFSM(dfaJson);
+	var nodes = dfa.nodes;
+	var links = dfa.links;
+	var n = nodes.length;
+	if (!n) return { format: SAVE_FORMAT, nodes: [], links: [] };
+
+	var alphabet = fsmAlphabet(nodes, links);
+
+	// Transition table indexed by [stateIdx][symbol]. Missing entries are -1.
+	var trans = [];
+	for (var i = 0; i < n; i++) trans.push({});
+	for (var li = 0; li < links.length; li++) {
+		var l = links[li];
+		var src, dst;
+		if (l instanceof Link) {
+			src = nodes.indexOf(l.nodeA);
+			dst = nodes.indexOf(l.nodeB);
+		} else if (l instanceof SelfLink) {
+			src = nodes.indexOf(l.node);
+			dst = src;
+		} else {
+			continue;
+		}
+		var syms = parseSymbols(l.text);
+		for (var k = 0; k < syms.length; k++) {
+			var s = syms[k];
+			if (s === '') {
+				throw new Error('minimize requires a DFA; found an epsilon edge');
+			}
+			if (trans[src][s] !== undefined && trans[src][s] !== dst) {
+				throw new Error(
+					'minimize requires a DFA; state ' +
+						src +
+						' has two targets on ' +
+						JSON.stringify(s),
+				);
+			}
+			trans[src][s] = dst;
+		}
+	}
+
+	var hasAccept = false;
+	for (var i = 0; i < n; i++) if (nodes[i].isAcceptState) hasAccept = true;
+
+	var partition = new Array(n);
+	for (var i = 0; i < n; i++) {
+		partition[i] = nodes[i].isAcceptState && hasAccept ? 1 : 0;
+	}
+	var numClasses = hasAccept ? 2 : 1;
+
+	while (true) {
+		var classOf = {};
+		var nextClass = 0;
+		var nextPartition = new Array(n);
+		for (var i = 0; i < n; i++) {
+			var sig = partition[i] + '|';
+			for (var a = 0; a < alphabet.length; a++) {
+				var t = trans[i][alphabet[a]];
+				sig += (t === undefined ? '-' : partition[t]) + ',';
+			}
+			if (!(sig in classOf)) classOf[sig] = nextClass++;
+			nextPartition[i] = classOf[sig];
+		}
+		if (nextClass === numClasses) {
+			var same = true;
+			for (var i = 0; i < n; i++) {
+				if (nextPartition[i] !== partition[i]) {
+					same = false;
+					break;
+				}
+			}
+			if (same) break;
+		}
+		partition = nextPartition;
+		numClasses = nextClass;
+	}
+
+	var rep = {};
+	for (var i = 0; i < n; i++) {
+		if (rep[partition[i]] === undefined) rep[partition[i]] = i;
+	}
+	var starts = getStartStates(nodes, links);
+	if (!starts.length) throw new Error('no start state to minimize from');
+
+	var json = { format: SAVE_FORMAT, nodes: [], links: [] };
+	for (var p = 0; p < numClasses; p++) {
+		var r = rep[p];
+		json.nodes.push({
+			x: 0,
+			y: 0,
+			text: 'd' + p,
+			isAcceptState: nodes[r].isAcceptState,
+		});
+	}
+	json.links.push({
+		type: 'StartLink',
+		node: partition[starts[0]],
+		text: '',
+		deltaX: -50,
+		deltaY: 0,
+	});
+
+	var grouped = {};
+	for (var p = 0; p < numClasses; p++) {
+		var r = rep[p];
+		for (var a = 0; a < alphabet.length; a++) {
+			var sym = alphabet[a];
+			var t = trans[r][sym];
+			if (t === undefined) continue;
+			var to = partition[t];
+			var gk = p + ',' + to;
+			if (!grouped[gk]) grouped[gk] = { from: p, to: to, syms: [] };
+			grouped[gk].syms.push(sym);
+		}
+	}
+	for (var gk in grouped) {
+		var g = grouped[gk];
+		var label = g.syms.join(',');
+		if (g.from === g.to) {
+			json.links.push({
+				type: 'SelfLink',
+				node: g.from,
+				text: label,
+				anchorAngle: -Math.PI / 2,
+			});
+		} else {
+			json.links.push({
+				type: 'Link',
+				nodeA: g.from,
+				nodeB: g.to,
+				text: label,
+				lineAngleAdjust: 0,
+				parallelPart: 0.5,
+				perpendicularPart: 0,
+			});
+		}
+	}
+	return json;
+}
+
+// Subset construction. Takes an FSM JSON, returns a DFA JSON without
+// coordinates (layout() positions them later).
+
+function fsmAlphabet(nodes, links) {
+	var set = {};
+	for (var i = 0; i < links.length; i++) {
+		var l = links[i];
+		if (!(l instanceof Link) && !(l instanceof SelfLink)) continue;
+		var syms = parseSymbols(l.text);
+		for (var k = 0; k < syms.length; k++) {
+			if (syms[k] !== '') set[syms[k]] = true;
+		}
+	}
+	return Object.keys(set).sort();
+}
+
+function nfaToDFA(nfaJson) {
+	var nfa = inflateFSM(nfaJson);
+	var starts = getStartStates(nfa.nodes, nfa.links);
+	if (starts.length !== 1) {
+		throw new Error(
+			'subset construction expects exactly one start state (got ' +
+				starts.length +
+				')',
+		);
+	}
+	var alphabet = fsmAlphabet(nfa.nodes, nfa.links);
+	var startClosure = epsilonClosure([starts[0]], nfa.nodes, nfa.links);
+
+	function key(set) {
+		return set
+			.slice()
+			.sort(function (a, b) {
+				return a - b;
+			})
+			.join(',');
+	}
+	function isAccept(set) {
+		for (var i = 0; i < set.length; i++) {
+			if (nfa.nodes[set[i]].isAcceptState) return true;
+		}
+		return false;
+	}
+
+	var seen = {};
+	var dfaStates = [];
+	var dfaTransitions = [];
+
+	function addState(set) {
+		var k = key(set);
+		if (k in seen) return seen[k];
+		var idx = dfaStates.length;
+		seen[k] = idx;
+		dfaStates.push({ members: set, accept: isAccept(set) });
+		return idx;
+	}
+
+	var startIdx = addState(startClosure);
+	var queue = [startIdx];
+	while (queue.length) {
+		var s = queue.shift();
+		var subset = dfaStates[s].members;
+		for (var a = 0; a < alphabet.length; a++) {
+			var sym = alphabet[a];
+			var step = simulateStep(subset, sym, nfa.nodes, nfa.links);
+			if (!step.states.length) continue;
+			var k = key(step.states);
+			var to;
+			if (k in seen) {
+				to = seen[k];
+			} else {
+				to = addState(step.states);
+				queue.push(to);
+			}
+			dfaTransitions.push({ from: s, to: to, symbol: sym });
+		}
+	}
+
+	var json = { format: SAVE_FORMAT, nodes: [], links: [] };
+	for (var i = 0; i < dfaStates.length; i++) {
+		json.nodes.push({
+			x: 0,
+			y: 0,
+			text: 'd' + i,
+			isAcceptState: dfaStates[i].accept,
+		});
+	}
+	json.links.push({
+		type: 'StartLink',
+		node: startIdx,
+		text: '',
+		deltaX: -50,
+		deltaY: 0,
+	});
+
+	// Combine multiple symbols between the same pair into one link with a
+	// comma-separated label (matches what simulate.js parses).
+	var grouped = {};
+	for (var t = 0; t < dfaTransitions.length; t++) {
+		var tr = dfaTransitions[t];
+		var gk = tr.from + ',' + tr.to;
+		if (!grouped[gk]) grouped[gk] = { from: tr.from, to: tr.to, syms: [] };
+		grouped[gk].syms.push(tr.symbol);
+	}
+	for (var gk in grouped) {
+		var g = grouped[gk];
+		var label = g.syms.join(',');
+		if (g.from === g.to) {
+			json.links.push({
+				type: 'SelfLink',
+				node: g.from,
+				text: label,
+				anchorAngle: -Math.PI / 2,
+			});
+		} else {
+			json.links.push({
+				type: 'Link',
+				nodeA: g.from,
+				nodeB: g.to,
+				text: label,
+				lineAngleAdjust: 0,
+				parallelPart: 0.5,
+				perpendicularPart: 0,
+			});
+		}
+	}
+	return json;
+}
+
 // Recursive-descent regex parser + Thompson construction.
 // Grammar:
 //   expr   = term ('|' term)*
@@ -2305,6 +2585,48 @@ function exportSnapshot() {
 		nodes: s.nodes,
 		links: s.links,
 	};
+}
+
+// Build live-style Node / Link objects from FSM JSON without touching the
+// global nodes / links arrays. Used by the algorithm modules that need to
+// reuse simulate.js helpers (getOutgoing, epsilonClosure) on a temporary
+// graph.
+function inflateFSM(obj) {
+	var ns = [];
+	if (obj.nodes) {
+		for (var i = 0; i < obj.nodes.length; i++) {
+			var bn = obj.nodes[i];
+			var node = new Node(bn.x, bn.y);
+			node.isAcceptState = !!bn.isAcceptState;
+			node.text = bn.text || '';
+			ns.push(node);
+		}
+	}
+	var ls = [];
+	if (obj.links) {
+		for (var j = 0; j < obj.links.length; j++) {
+			var bl = obj.links[j];
+			var link = null;
+			if (bl.type === 'SelfLink') {
+				link = new SelfLink(ns[bl.node]);
+				link.anchorAngle = bl.anchorAngle;
+				link.text = bl.text || '';
+			} else if (bl.type === 'StartLink') {
+				link = new StartLink(ns[bl.node]);
+				link.deltaX = bl.deltaX;
+				link.deltaY = bl.deltaY;
+				link.text = bl.text || '';
+			} else if (bl.type === 'Link') {
+				link = new Link(ns[bl.nodeA], ns[bl.nodeB]);
+				link.parallelPart = bl.parallelPart;
+				link.perpendicularPart = bl.perpendicularPart;
+				link.text = bl.text || '';
+				link.lineAngleAdjust = bl.lineAngleAdjust;
+			}
+			if (link) ls.push(link);
+		}
+	}
+	return { nodes: ns, links: ls };
 }
 
 function validateSnapshot(obj) {
@@ -2655,6 +2977,8 @@ function wireUI() {
 	var regexPreview = document.getElementById('regex-preview');
 	var regexInsertBtn = document.getElementById('regex-insert');
 	var regexReplaceBtn = document.getElementById('regex-replace');
+	var toDFABtn = document.getElementById('btn-to-dfa');
+	var minimizeBtn = document.getElementById('btn-minimize');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -3212,6 +3536,53 @@ function wireUI() {
 				regexModal.hidden = true;
 			} catch (e) {
 				regexError.textContent = e.message;
+			}
+		};
+	}
+
+	function currentFSMAsJson() {
+		var s = serializeState();
+		return { format: SAVE_FORMAT, nodes: s.nodes, links: s.links };
+	}
+
+	if (toDFABtn) {
+		toDFABtn.onclick = function () {
+			try {
+				var result = nfaToDFA(currentFSMAsJson());
+				if (
+					!confirm(
+						'Convert: ' +
+							nodes.length +
+							' states -> ' +
+							result.nodes.length +
+							' states. Create as a new FSM in the workspace?',
+					)
+				)
+					return;
+				applyFSMJsonAsNew(result, 'DFA of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+			} catch (e) {
+				showToast(e.message, 'error');
+			}
+		};
+	}
+
+	if (minimizeBtn) {
+		minimizeBtn.onclick = function () {
+			try {
+				var result = minimize(currentFSMAsJson());
+				if (
+					!confirm(
+						'Minimize: ' +
+							nodes.length +
+							' states -> ' +
+							result.nodes.length +
+							' states. Create as a new FSM?',
+					)
+				)
+					return;
+				applyFSMJsonAsNew(result, 'Min of ' + (Workspace.getActive() ? Workspace.getActive().name : 'FSM'));
+			} catch (e) {
+				showToast(e.message, 'error');
 			}
 		};
 	}

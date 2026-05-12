@@ -146,6 +146,48 @@ function exportSnapshot() {
 	};
 }
 
+// Build live-style Node / Link objects from FSM JSON without touching the
+// global nodes / links arrays. Used by the algorithm modules that need to
+// reuse simulate.js helpers (getOutgoing, epsilonClosure) on a temporary
+// graph.
+function inflateFSM(obj) {
+	var ns = [];
+	if (obj.nodes) {
+		for (var i = 0; i < obj.nodes.length; i++) {
+			var bn = obj.nodes[i];
+			var node = new Node(bn.x, bn.y);
+			node.isAcceptState = !!bn.isAcceptState;
+			node.text = bn.text || '';
+			ns.push(node);
+		}
+	}
+	var ls = [];
+	if (obj.links) {
+		for (var j = 0; j < obj.links.length; j++) {
+			var bl = obj.links[j];
+			var link = null;
+			if (bl.type === 'SelfLink') {
+				link = new SelfLink(ns[bl.node]);
+				link.anchorAngle = bl.anchorAngle;
+				link.text = bl.text || '';
+			} else if (bl.type === 'StartLink') {
+				link = new StartLink(ns[bl.node]);
+				link.deltaX = bl.deltaX;
+				link.deltaY = bl.deltaY;
+				link.text = bl.text || '';
+			} else if (bl.type === 'Link') {
+				link = new Link(ns[bl.nodeA], ns[bl.nodeB]);
+				link.parallelPart = bl.parallelPart;
+				link.perpendicularPart = bl.perpendicularPart;
+				link.text = bl.text || '';
+				link.lineAngleAdjust = bl.lineAngleAdjust;
+			}
+			if (link) ls.push(link);
+		}
+	}
+	return { nodes: ns, links: ls };
+}
+
 function validateSnapshot(obj) {
 	if (!obj || typeof obj !== 'object') return 'not an object';
 	if (obj.format !== SAVE_FORMAT) {
