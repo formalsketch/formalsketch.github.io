@@ -35,6 +35,14 @@ function wireUI() {
 	var importFile = document.getElementById('import-file');
 	var exportJSONBtn = document.getElementById('btn-export-json');
 	var layoutBtn = document.getElementById('btn-layout');
+	var regexBtn = document.getElementById('btn-regex');
+	var regexModal = document.getElementById('regex-modal');
+	var regexClose = document.getElementById('btn-close-regex');
+	var regexInput = document.getElementById('regex-input');
+	var regexError = document.getElementById('regex-error');
+	var regexPreview = document.getElementById('regex-preview');
+	var regexInsertBtn = document.getElementById('regex-insert');
+	var regexReplaceBtn = document.getElementById('regex-replace');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -534,6 +542,117 @@ function wireUI() {
 	});
 
 	if (shareBtn) shareBtn.onclick = copyShareLink;
+
+	var regexPreviewTimer = null;
+	function renderRegexPreview() {
+		if (!regexPreview || !regexInput) return;
+		var text = regexInput.value;
+		if (!text) {
+			regexError.textContent = '';
+			regexPreview.getContext('2d').clearRect(0, 0, regexPreview.width, regexPreview.height);
+			return;
+		}
+		try {
+			var json = regexToNFA(text);
+			regexError.textContent = json.nodes.length + ' states';
+			previewFSMJson(json, regexPreview);
+		} catch (e) {
+			regexError.textContent = e.message;
+		}
+	}
+	if (regexBtn && regexModal) {
+		regexBtn.onclick = function () {
+			regexModal.hidden = false;
+			if (regexInput) {
+				regexInput.focus();
+				renderRegexPreview();
+			}
+		};
+	}
+	if (regexClose) regexClose.onclick = function () { regexModal.hidden = true; };
+	if (regexModal) {
+		regexModal.onclick = function (e) {
+			if (e.target === regexModal) regexModal.hidden = true;
+		};
+	}
+	if (regexInput) {
+		regexInput.oninput = function () {
+			clearTimeout(regexPreviewTimer);
+			regexPreviewTimer = setTimeout(renderRegexPreview, 150);
+		};
+	}
+	if (regexInsertBtn) {
+		regexInsertBtn.onclick = function () {
+			try {
+				var json = regexToNFA(regexInput.value);
+				applyFSMJsonAsNew(json, 'Regex: ' + regexInput.value);
+				regexModal.hidden = true;
+			} catch (e) {
+				regexError.textContent = e.message;
+			}
+		};
+	}
+	if (regexReplaceBtn) {
+		regexReplaceBtn.onclick = function () {
+			try {
+				var json = regexToNFA(regexInput.value);
+				applyFSMJsonInPlace(json);
+				regexModal.hidden = true;
+			} catch (e) {
+				regexError.textContent = e.message;
+			}
+		};
+	}
+
+	// Swap live nodes/links/canvas for a JSON-driven render onto a target
+	// canvas, then restore. Used by the regex preview and would-be other
+	// algorithm previews. The "live" arrays are mutated in place so the
+	// rest of the editor doesn't see the swap.
+	function previewFSMJson(json, target) {
+		var savedNodes = nodes.slice();
+		var savedLinks = links.slice();
+		var savedSelected = selectedObject;
+		var savedSim = simulationState;
+		var savedCanvas = canvas;
+		try {
+			nodes.length = 0;
+			links.length = 0;
+			selectedObject = null;
+			simulationState = null;
+			canvas = target;
+			deserializeState(json);
+			layout(nodes, links);
+			drawUsing(target.getContext('2d'), EXPORT_COLORS);
+		} finally {
+			nodes.length = 0;
+			links.length = 0;
+			for (var i = 0; i < savedNodes.length; i++) nodes.push(savedNodes[i]);
+			for (var j = 0; j < savedLinks.length; j++) links.push(savedLinks[j]);
+			canvas = savedCanvas;
+			selectedObject = savedSelected;
+			simulationState = savedSim;
+		}
+	}
+
+	function applyFSMJsonAsNew(json, name) {
+		flushHistory();
+		saveBackup();
+		var id = Workspace.create(name || 'FSM');
+		Workspace.switchTo(id);
+		deserializeState(json);
+		layout(nodes, links);
+		commitHistory();
+		draw();
+		updateTitle();
+	}
+
+	function applyFSMJsonInPlace(json) {
+		flushHistory();
+		deserializeState(json);
+		layout(nodes, links);
+		commitHistory();
+		draw();
+	}
 
 	if (layoutBtn) {
 		layoutBtn.onclick = function () {

@@ -648,6 +648,71 @@
         margin-bottom: 4px;
       }
 
+      .regex-input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .regex-input-row input {
+        flex: 1;
+        background: var(--textarea-bg);
+        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 8px 10px;
+        font:
+          14px/1.4 ui-monospace,
+          Consolas,
+          monospace;
+      }
+      .regex-error {
+        color: var(--error);
+        font-size: 12px;
+        min-height: 16px;
+        margin-bottom: 8px;
+      }
+      .regex-preview-wrap {
+        background: var(--canvas-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .regex-preview-wrap canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 4 / 3;
+      }
+      .regex-actions {
+        border-top: 1px solid var(--border);
+        padding: 12px 18px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .regex-actions button {
+        background: var(--surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 7px 14px;
+        font: inherit;
+        font-size: 13px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .regex-actions button:hover {
+        background: var(--hover-bg);
+        border-color: var(--border-strong);
+      }
+      .regex-actions button.primary {
+        background: var(--accent);
+        color: var(--accent-text);
+        border-color: var(--accent);
+      }
+      .regex-actions button.primary:hover {
+        background: var(--accent-hover);
+      }
+
       .help {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -813,6 +878,9 @@
           </button>
           <span class="sep"></span>
           <button id="btn-clear" title="Clear current FSM">Clear</button>
+          <button id="btn-regex" title="Build NFA from a regular expression">
+            Regex...
+          </button>
           <button id="btn-simulate" title="Simulate input on this FSM">
             Simulate
           </button>
@@ -939,6 +1007,41 @@
           <button id="btn-close-shortcuts" aria-label="Close">×</button>
         </header>
         <div class="modal-body" id="shortcuts-body"></div>
+      </div>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="regex-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="regex-title"
+    >
+      <div class="modal">
+        <header>
+          <h2 id="regex-title">Build NFA from regex</h2>
+          <button id="btn-close-regex" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body">
+          <div class="regex-input-row">
+            <input
+              type="text"
+              id="regex-input"
+              placeholder="e.g. (a|b)*abb"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="regex-error" id="regex-error"></div>
+          <div class="regex-preview-wrap">
+            <canvas id="regex-preview" width="800" height="600"></canvas>
+          </div>
+        </div>
+        <div class="regex-actions">
+          <button id="regex-insert" class="primary">Insert as new FSM</button>
+          <button id="regex-replace">Replace current FSM</button>
+        </div>
       </div>
     </div>
 
