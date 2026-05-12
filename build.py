@@ -1,20 +1,31 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-import os, time, sys
+import os, sys, time
+
+SRC = './src'
+OUT = './www/fsm.js'
 
 def sources():
-	path = './src/'
-	return [os.path.join(base, f) for base, folders, files in os.walk(path) for f in files if f.endswith('.js')]
+	files = []
+	for base, _, names in os.walk(SRC):
+		for n in names:
+			if n.endswith('.js'):
+				files.append(os.path.join(base, n).replace('\\', '/'))
+	files.sort()
+	return files
 
 def build():
-	path = './www/fsm.js'
-	data = '\n'.join(open(file, 'r').read() for file in sources())
-	with open(path, 'w') as f:
+	parts = []
+	for path in sources():
+		with open(path, 'r', encoding='utf-8') as f:
+			parts.append(f.read())
+	data = '\n'.join(parts)
+	with open(OUT, 'w', encoding='utf-8', newline='') as f:
 		f.write(data)
-	print 'built %s (%u bytes)' % (path, len(data))
+	print('built %s (%u bytes)' % (OUT, len(data)))
 
 def stat():
-	return [os.stat(file).st_mtime for file in sources()]
+	return [os.stat(f).st_mtime for f in sources()]
 
 def monitor():
 	a = stat()
