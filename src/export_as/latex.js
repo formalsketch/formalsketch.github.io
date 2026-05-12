@@ -1,4 +1,19 @@
 // draw using this instead of a canvas and call toLaTeX() afterward
+
+// from upstream PR #17: escape LaTeX specials before wrapping the label in $...$
+// math mode. PR #17 only escaped `$` with a non-global string literal (first match
+// only); we use /g and cover the rest of the math-mode specials.
+function escapeLaTeX(s) {
+	return s
+		.replace(/\$/g, '\\$')
+		.replace(/%/g, '\\%')
+		.replace(/&/g, '\\&')
+		.replace(/#/g, '\\#')
+		.replace(/_/g, '\\_')
+		.replace(/\{/g, '\\{')
+		.replace(/\}/g, '\\}');
+}
+
 function ExportAsLaTeX() {
 	this._points = [];
 	this._texData = '';
@@ -141,7 +156,7 @@ function ExportAsLaTeX() {
 				') node ' +
 				nodeParams +
 				'{$' +
-				originalText.replace(/ /g, '\\mbox{ }') +
+				escapeLaTeX(originalText).replace(/ /g, '\\mbox{ }') +
 				'$};\n';
 		}
 	};

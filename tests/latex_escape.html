@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>latex escape tests</title>
+		<style>
+			body {
+				font:
+					14px/1.5 -apple-system,
+					BlinkMacSystemFont,
+					'Segoe UI',
+					sans-serif;
+				margin: 24px;
+				max-width: 900px;
+			}
+			pre {
+				background: #f5f5f5;
+				padding: 12px;
+				border-radius: 6px;
+				overflow-x: auto;
+				font:
+					12px/1.5 ui-monospace,
+					Menlo,
+					Consolas,
+					monospace;
+			}
+			.pass {
+				color: #0a7;
+			}
+			.fail {
+				color: #c00;
+				font-weight: 600;
+			}
+			h1 {
+				font-size: 18px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>LaTeX escape tests</h1>
+		<p>
+			Renders an FSM with one node per case, exports as LaTeX, and checks the
+			output for the escaped substring.
+		</p>
+
+		<canvas
+			id="canvas"
+			width="200"
+			height="200"
+			style="border: 1px solid #ddd"
+		></canvas>
+
+		<pre id="report">running...</pre>
+		<details>
+			<summary>last raw LaTeX output</summary>
+			<pre id="raw"></pre>
+		</details>
+
+		<div style="display: none" aria-hidden="true">
+			<ul id="fsm-list"></ul>
+			<button id="btn-new-fsm"></button>
+			<button id="btn-undo"></button>
+			<button id="btn-redo"></button>
+			<button id="btn-clear"></button>
+			<button id="btn-png"></button>
+			<button id="btn-svg"></button>
+			<button id="btn-latex"></button>
+			<button id="btn-theme"></button>
+			<span id="current-fsm-name"></span>
+			<div id="toast"></div>
+		</div>
+
+		<script src="../www/fsm.js"></script>
+		<script>
+			// fsm.js sets window.onload; chain ours after it so canvas + globals are ready.
+			var origOnload = window.onload;
+			window.onload = function () {
+				if (typeof origOnload === 'function') origOnload();
+				runTests();
+			};
+
+			function runTests() {
+				var cases = [
+					{ input: '$100', expect: '\\$100' },
+					{ input: '50%', expect: '50\\%' },
+					{ input: 'a&b', expect: 'a\\&b' },
+					{ input: '#tag', expect: '\\#tag' },
+					{ input: 'x_1', expect: 'x\\_1' },
+					{ input: '{x}', expect: '\\{x\\}' },
+					{ input: '\\beta', expect: '\\beta' },
+				];
+
+				var lines = [];
+				var lastTex = '';
+				var failures = 0;
+
+				for (var i = 0; i < cases.length; i++) {
+					var c = cases[i];
+					nodes.length = 0;
+					links.length = 0;
+					selectedObject = null;
+					var n = new Node(100, 100);
+					n.text = c.input;
+					nodes.push(n);
+
+					var exporter = new ExportAsLaTeX();
+					drawUsing(exporter, EXPORT_COLORS);
+					lastTex = exporter.toLaTeX();
+
+					var ok = lastTex.indexOf(c.expect) !== -1;
+					if (!ok) failures++;
+					lines.push(
+						(ok ? 'PASS' : 'FAIL') +
+							'  input=' +
+							JSON.stringify(c.input) +
+							'  expect substring=' +
+							JSON.stringify(c.expect),
+					);
+				}
+
+				var report = document.getElementById('report');
+				report.textContent =
+					(failures === 0
+						? 'all ' + cases.length + ' cases passed'
+						: failures + ' / ' + cases.length + ' failed') +
+					'\n\n' +
+					lines.join('\n');
+				if (failures > 0) report.className = 'fail';
+				else report.className = 'pass';
+				document.getElementById('raw').textContent = lastTex;
+			}
+		</script>
+	</body>
+</html>
