@@ -25,6 +25,11 @@ function wireUI() {
 	var simStep = document.getElementById('sim-step');
 	var simReset = document.getElementById('sim-reset');
 	var simStatus = document.getElementById('sim-status');
+	var lintBtn = document.getElementById('btn-lint');
+	var lintModal = document.getElementById('lint-modal');
+	var lintClose = document.getElementById('btn-close-lint');
+	var lintBody = document.getElementById('lint-body');
+	var lintPrefs = document.getElementById('lint-prefs');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -177,8 +182,12 @@ function wireUI() {
 	Workspace.onChange(function () {
 		renderSidebar();
 		updateTitle();
+		updateLintBadge();
 	});
-	History.onChange(updateToolbar);
+	History.onChange(function () {
+		updateToolbar();
+		updateLintBadge();
+	});
 
 	// from upstream PR #39: shortcuts help modal, populated lazily from
 	// LATEX_SHORTCUTS so the table stays the single source of truth. On mobile
@@ -384,6 +393,115 @@ function wireUI() {
 		};
 	}
 
+	function activeLintWarnings() {
+		var raw = lint(nodes, links);
+		var out = [];
+		for (var i = 0; i < raw.length; i++) {
+			if (lintEnabledFor(raw[i].kind)) out.push(raw[i]);
+		}
+		return out;
+	}
+
+	function updateLintBadge() {
+		if (!lintBtn) return;
+		var warnings = activeLintWarnings();
+		while (lintBtn.firstChild) lintBtn.removeChild(lintBtn.firstChild);
+		lintBtn.appendChild(document.createTextNode('Lint'));
+		if (!warnings.length) return;
+		var sev = 'info';
+		for (var i = 0; i < warnings.length; i++) {
+			if (warnings[i].severity === 'error') {
+				sev = 'error';
+				break;
+			}
+			if (warnings[i].severity === 'warning') sev = 'warn';
+		}
+		var badge = document.createElement('span');
+		badge.className = 'badge ' + sev;
+		badge.textContent = warnings.length;
+		lintBtn.appendChild(badge);
+	}
+
+	function renderLintList() {
+		if (!lintBody) return;
+		while (lintBody.firstChild) lintBody.removeChild(lintBody.firstChild);
+		var warnings = activeLintWarnings();
+		if (!warnings.length) {
+			var empty = document.createElement('div');
+			empty.className = 'lint-empty';
+			empty.textContent = 'no issues';
+			lintBody.appendChild(empty);
+			return;
+		}
+		var list = document.createElement('ul');
+		list.className = 'lint-list';
+		for (var i = 0; i < warnings.length; i++) {
+			(function (w) {
+				var li = document.createElement('li');
+				if (!w.element) li.className = 'no-target';
+				var sev = document.createElement('span');
+				sev.className = 'lint-sev ' + w.severity;
+				sev.textContent = w.severity;
+				li.appendChild(sev);
+				li.appendChild(document.createTextNode(w.message));
+				if (w.element) {
+					li.onclick = function () {
+						selectedObject = w.element;
+						lintModal.hidden = true;
+						draw();
+					};
+				}
+				list.appendChild(li);
+			})(warnings[i]);
+		}
+		lintBody.appendChild(list);
+	}
+
+	function renderLintPrefs() {
+		if (!lintPrefs) return;
+		while (lintPrefs.firstChild) lintPrefs.removeChild(lintPrefs.firstChild);
+		var h = document.createElement('h3');
+		h.textContent = 'Enabled checks';
+		lintPrefs.appendChild(h);
+		for (var i = 0; i < LINT_KINDS.length; i++) {
+			(function (k) {
+				var label = document.createElement('label');
+				var cb = document.createElement('input');
+				cb.type = 'checkbox';
+				cb.checked = lintEnabledFor(k.id);
+				cb.onchange = function () {
+					setLintEnabled(k.id, cb.checked);
+					renderLintList();
+					updateLintBadge();
+				};
+				label.appendChild(cb);
+				label.appendChild(document.createTextNode(' ' + k.label));
+				lintPrefs.appendChild(label);
+			})(LINT_KINDS[i]);
+		}
+	}
+
+	if (lintBtn) {
+		lintBtn.onclick = function () {
+			if (!lintModal) return;
+			renderLintList();
+			renderLintPrefs();
+			lintModal.hidden = false;
+			if (lintClose) lintClose.focus();
+		};
+	}
+	if (lintClose) lintClose.onclick = function () { lintModal.hidden = true; };
+	if (lintModal) {
+		lintModal.onclick = function (e) {
+			if (e.target === lintModal) lintModal.hidden = true;
+		};
+	}
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && lintModal && lintModal.hidden === false) {
+			lintModal.hidden = true;
+		}
+	});
+
 	if (shortcutsBtn) shortcutsBtn.onclick = openShortcuts;
 	if (shortcutsClose) shortcutsClose.onclick = closeShortcuts;
 	if (shortcutsModal) {
@@ -417,4 +535,5 @@ function wireUI() {
 	renderSidebar();
 	updateTitle();
 	updateToolbar();
+	updateLintBadge();
 }

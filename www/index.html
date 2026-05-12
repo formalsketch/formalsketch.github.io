@@ -560,6 +560,94 @@
         margin-right: 8px;
       }
 
+      #btn-lint .badge {
+        display: inline-block;
+        margin-left: 6px;
+        min-width: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        background: #c0392b;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+      }
+      #btn-lint .badge.warn {
+        background: #d68910;
+      }
+      #btn-lint .badge.info {
+        background: #2c7be5;
+      }
+      .lint-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .lint-list li {
+        padding: 8px 10px;
+        border-radius: 7px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+      }
+      .lint-list li:hover {
+        background: var(--hover-bg);
+      }
+      .lint-list li.no-target {
+        cursor: default;
+      }
+      .lint-list li.no-target:hover {
+        background: transparent;
+      }
+      .lint-sev {
+        font-size: 10px;
+        text-transform: uppercase;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .lint-sev.error {
+        background: #c0392b;
+        color: #fff;
+      }
+      .lint-sev.warning {
+        background: #d68910;
+        color: #fff;
+      }
+      .lint-sev.info {
+        background: #2c7be5;
+        color: #fff;
+      }
+      .lint-empty {
+        color: var(--text-muted);
+        font-size: 13px;
+        padding: 12px 4px;
+      }
+      .lint-prefs {
+        border-top: 1px solid var(--border);
+        padding: 12px 18px;
+        font-size: 12px;
+        color: var(--text-subtle);
+      }
+      .lint-prefs h3 {
+        margin: 0 0 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .lint-prefs label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 14px;
+        margin-bottom: 4px;
+      }
+
       .help {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -728,6 +816,7 @@
           <button id="btn-simulate" title="Simulate input on this FSM">
             Simulate
           </button>
+          <button id="btn-lint" title="Diagram checks">Lint</button>
           <button
             id="btn-shortcuts"
             title="LaTeX shortcuts"
@@ -838,6 +927,24 @@
           <button id="btn-close-shortcuts" aria-label="Close">×</button>
         </header>
         <div class="modal-body" id="shortcuts-body"></div>
+      </div>
+    </div>
+
+    <div
+      class="modal-backdrop"
+      id="lint-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lint-title"
+    >
+      <div class="modal">
+        <header>
+          <h2 id="lint-title">Lint</h2>
+          <button id="btn-close-lint" aria-label="Close">×</button>
+        </header>
+        <div class="modal-body" id="lint-body"></div>
+        <div class="lint-prefs" id="lint-prefs"></div>
       </div>
     </div>
   </body>
