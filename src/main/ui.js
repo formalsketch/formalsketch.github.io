@@ -54,6 +54,7 @@ function wireUI() {
 	var nlGenerateBtn = document.getElementById('nl-generate');
 	var nlDescribeBtn = document.getElementById('nl-describe');
 	var nlResponse = document.getElementById('nl-response');
+	var examplesSelect = document.getElementById('examples-select');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -736,6 +737,25 @@ function wireUI() {
 					setNLResponse(String(err.message || err));
 				},
 			);
+		};
+	}
+
+	if (examplesSelect && typeof EXAMPLES !== 'undefined') {
+		for (var ei = 0; ei < EXAMPLES.length; ei++) {
+			var opt = document.createElement('option');
+			opt.value = String(ei);
+			opt.textContent = EXAMPLES[ei].name;
+			examplesSelect.appendChild(opt);
+		}
+		examplesSelect.onchange = function () {
+			var idx = parseInt(examplesSelect.value, 10);
+			examplesSelect.value = '';
+			if (isNaN(idx) || !EXAMPLES[idx]) return;
+			try {
+				applyFSMJsonAsNew(EXAMPLES[idx].build(), EXAMPLES[idx].name);
+			} catch (e) {
+				showToast('Could not load example: ' + e.message, 'error');
+			}
 		};
 	}
 
