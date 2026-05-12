@@ -361,6 +361,58 @@
         overflow-x: auto;
       }
 
+      .sim-panel {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .sim-panel[hidden] {
+        display: none;
+      }
+      .sim-panel input {
+        flex: 1;
+        min-width: 140px;
+        background: var(--textarea-bg);
+        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 6px 10px;
+        font: inherit;
+        font-size: 13px;
+      }
+      .sim-panel button {
+        background: var(--surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 13px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .sim-panel button:hover {
+        background: var(--hover-bg);
+        border-color: var(--border-strong);
+      }
+      .sim-status {
+        font-size: 13px;
+        color: var(--text-subtle);
+      }
+      .sim-status.accept {
+        color: #2ca44b;
+        font-weight: 600;
+      }
+      .sim-status.reject {
+        color: #c0392b;
+        font-weight: 600;
+      }
+
       /* from upstream PR #44: floating arrow-mode toggle shown only when the
          primary input is a touchscreen (no hover, coarse pointer). */
       .arrow-mode {
@@ -673,6 +725,9 @@
           </button>
           <span class="sep"></span>
           <button id="btn-clear" title="Clear current FSM">Clear</button>
+          <button id="btn-simulate" title="Simulate input on this FSM">
+            Simulate
+          </button>
           <button
             id="btn-shortcuts"
             title="LaTeX shortcuts"
@@ -701,6 +756,20 @@
               element</span
             >
           </canvas>
+        </div>
+
+        <div class="sim-panel" id="sim-panel" hidden>
+          <input
+            type="text"
+            id="sim-input"
+            placeholder="input string e.g. 0110"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="sim-run">Run</button>
+          <button id="sim-step">Step</button>
+          <button id="sim-reset">Reset</button>
+          <span class="sim-status" id="sim-status"></span>
         </div>
 
         <div class="help">

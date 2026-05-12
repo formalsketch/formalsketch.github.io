@@ -18,6 +18,13 @@ function wireUI() {
 	var shortcutsBody = document.getElementById('shortcuts-body');
 	var latexModeSelect = document.getElementById('latex-mode');
 	var arrowModeBtn = document.getElementById('btn-arrow-mode');
+	var simBtn = document.getElementById('btn-simulate');
+	var simPanel = document.getElementById('sim-panel');
+	var simInput = document.getElementById('sim-input');
+	var simRun = document.getElementById('sim-run');
+	var simStep = document.getElementById('sim-step');
+	var simReset = document.getElementById('sim-reset');
+	var simStatus = document.getElementById('sim-status');
 
 	function switchToFsm(id) {
 		if (id === Workspace.getActiveId()) return;
@@ -270,6 +277,110 @@ function wireUI() {
 				touchArrowMode ? 'true' : 'false',
 			);
 			arrowModeBtn.textContent = touchArrowMode ? 'Arrow: on' : 'Arrow: off';
+		};
+	}
+
+	// Simulation panel. Read-only over the current diagram; bypasses History.
+	var stepIndex = 0;
+	function setSimStatus(text, kind) {
+		if (!simStatus) return;
+		simStatus.textContent = text || '';
+		simStatus.className = 'sim-status' + (kind ? ' ' + kind : '');
+	}
+	function resetSim() {
+		stepIndex = 0;
+		simulationState = null;
+		setSimStatus('');
+		draw();
+	}
+	function runSim() {
+		var result = simulate(nodes, links, simInput ? simInput.value : '');
+		var last = result.path.length ? result.path[result.path.length - 1] : [];
+		simulationState = {
+			active: last,
+			lastLink: null,
+			accepted: result.accepted,
+			error: result.error || null,
+		};
+		if (result.error) {
+			setSimStatus(result.error, 'reject');
+		} else {
+			setSimStatus(result.accepted ? 'Accepted' : 'Rejected',
+				result.accepted ? 'accept' : 'reject');
+		}
+		stepIndex = result.path.length;
+		draw();
+	}
+	function stepSim() {
+		var input = simInput ? simInput.value : '';
+		if (stepIndex === 0 || !simulationState) {
+			var starts = getStartStates(nodes, links);
+			if (starts.length !== 1) {
+				simulationState = { active: [], lastLink: null, accepted: false, error: starts.length === 0 ? 'no start state' : 'multiple start states' };
+				setSimStatus(simulationState.error, 'reject');
+				draw();
+				return;
+			}
+			simulationState = {
+				active: epsilonClosure([starts[0]], nodes, links),
+				lastLink: null,
+				accepted: false,
+				error: null,
+			};
+			stepIndex = 0;
+			setSimStatus('step 0 of ' + input.length);
+			draw();
+			return;
+		}
+		if (stepIndex >= input.length) {
+			var accepted = false;
+			for (var i = 0; i < simulationState.active.length; i++) {
+				var n = nodes[simulationState.active[i]];
+				if (n && n.isAcceptState) accepted = true;
+			}
+			simulationState.accepted = accepted;
+			setSimStatus(accepted ? 'Accepted' : 'Rejected', accepted ? 'accept' : 'reject');
+			draw();
+			return;
+		}
+		var sym = input.charAt(stepIndex);
+		var step = simulateStep(simulationState.active, sym, nodes, links);
+		if (step.states.length === 0) {
+			simulationState.error = 'no transition for ' + JSON.stringify(sym) + ' at step ' + (stepIndex + 1);
+			setSimStatus(simulationState.error, 'reject');
+			draw();
+			return;
+		}
+		simulationState.active = step.states;
+		simulationState.lastLink = step.links[0] || null;
+		stepIndex++;
+		setSimStatus('step ' + stepIndex + ' of ' + input.length + ' (on ' + JSON.stringify(sym) + ')');
+		draw();
+		// fade the transition highlight after a moment
+		setTimeout(function () {
+			if (simulationState) {
+				simulationState.lastLink = null;
+				draw();
+			}
+		}, 350);
+	}
+
+	if (simBtn && simPanel) {
+		simBtn.onclick = function () {
+			simPanel.hidden = !simPanel.hidden;
+			if (simPanel.hidden) resetSim();
+			else if (simInput) simInput.focus();
+		};
+	}
+	if (simRun) simRun.onclick = runSim;
+	if (simStep) simStep.onclick = stepSim;
+	if (simReset) simReset.onclick = resetSim;
+	if (simInput) {
+		simInput.onkeydown = function (e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				runSim();
+			}
 		};
 	}
 

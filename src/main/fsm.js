@@ -246,6 +246,8 @@ var selectedObject = null; // either a Link or a Node
 var currentLink = null; // a Link
 var movingObject = false;
 var originalClick;
+// set by ui.js while a simulation panel is active. { active: [stateIdx...], lastLink, accepted, error }
+var simulationState = null;
 
 function getDrawColors() {
 	try {
@@ -289,7 +291,36 @@ function drawUsing(c, colors) {
 
 function draw() {
 	drawUsing(canvas.getContext('2d'));
+	drawSimulationOverlay();
 	saveBackup();
+}
+
+function drawSimulationOverlay() {
+	if (!simulationState) return;
+	var c = canvas.getContext('2d');
+	c.save();
+	c.translate(0.5, 0.5);
+	c.lineWidth = 3;
+	c.strokeStyle = simulationState.accepted
+		? '#2ca44b'
+		: simulationState.error
+			? '#c0392b'
+			: '#2c7be5';
+	var active = simulationState.active || [];
+	for (var i = 0; i < active.length; i++) {
+		var n = nodes[active[i]];
+		if (!n) continue;
+		c.beginPath();
+		c.arc(n.x, n.y, nodeRadius + 5, 0, 2 * Math.PI);
+		c.stroke();
+	}
+	if (simulationState.lastLink) {
+		c.lineWidth = 4;
+		c.strokeStyle = '#f0a500';
+		c.fillStyle = '#f0a500';
+		simulationState.lastLink.draw(c);
+	}
+	c.restore();
 }
 
 function selectObject(x, y) {
