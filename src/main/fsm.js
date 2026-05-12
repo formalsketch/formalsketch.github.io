@@ -533,12 +533,14 @@ function crossBrowserRelativeMousePos(e) {
 }
 
 function saveAsPNG() {
-	var oldSelectedObject = selectedObject;
+	// from upstream PR #34: route via downloadDataURL so Chromium fires the save dialog
+	// instead of navigating to the data: URL (which the old `location.href = pngData` did).
+	var prev = selectedObject;
 	selectedObject = null;
 	drawUsing(canvas.getContext('2d'), EXPORT_COLORS);
-	selectedObject = oldSelectedObject;
+	selectedObject = prev;
 	var pngData = canvas.toDataURL('image/png');
-	draw(); // restore on-screen with theme colors
+	draw();
 	var ok = downloadDataURL(activeFSMFileName('png'), pngData);
 	if (ok) showToast('PNG downloaded');
 	else showToast('Could not download PNG', 'error');
