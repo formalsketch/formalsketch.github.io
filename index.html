@@ -1070,7 +1070,11 @@
           <button id="btn-png">PNG</button>
           <button id="btn-svg">SVG</button>
           <button id="btn-latex">LaTeX</button>
-          <select id="latex-mode" title="LaTeX export format">
+          <select
+            id="latex-mode"
+            title="LaTeX export format"
+            aria-label="LaTeX export format"
+          >
             <option value="standalone">standalone</option>
             <option value="snippet">snippet</option>
           </select>
@@ -1101,6 +1105,7 @@
             type="text"
             id="sim-input"
             placeholder="input string e.g. 0110"
+            aria-label="Simulation input string"
             autocomplete="off"
             spellcheck="false"
           />
@@ -1198,6 +1203,7 @@
               type="password"
               id="nl-key"
               placeholder="API key"
+              aria-label="Model API key"
               autocomplete="off"
             />
             <button id="nl-key-save">Save</button>
@@ -1244,6 +1250,7 @@
               type="text"
               id="regex-input"
               placeholder="e.g. (a|b)*abb"
+              aria-label="Regular expression"
               autocomplete="off"
               spellcheck="false"
             />

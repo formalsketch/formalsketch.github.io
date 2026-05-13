@@ -239,9 +239,14 @@ function wireUI() {
 			['Add a state', 'double-click empty canvas (or double-tap on touch)'],
 			['Add an arrow', 'shift-drag, or use the arrow-mode toggle on touch'],
 			['Move', 'drag any state or arrow'],
-			['Delete', 'select then press Delete, or backspace when label is empty'],
+			['Delete', 'select then press Delete, or Backspace when label is empty'],
 			['Accept state', 'double-click an existing state'],
 			['Undo / Redo', 'Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z'],
+			['Tab / Shift+Tab', 'cycle selection through nodes then links'],
+			['N', 'new state at canvas center (when nothing is selected)'],
+			['L', 'start an arrow from the selected state; Tab cycles target, Enter confirms'],
+			['Arrow keys', 'nudge the selected state by 5px (Shift+Arrow for 1px)'],
+			['Escape', 'deselect (or cancel an in-progress arrow)'],
 		];
 		for (var g = 0; g < tips.length; g++) {
 			var li = document.createElement('li');
