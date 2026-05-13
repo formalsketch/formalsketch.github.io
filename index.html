@@ -370,12 +370,14 @@
         background: var(--canvas-bg);
         border: 1px solid var(--border);
         border-radius: 12px;
-        width: 100%;
-        max-width: 100%;
         /* from upstream PR #44: aspect-ratio keeps the 800x600 buffer's shape
-           on every viewport without resizing the drawing buffer. */
+           on every viewport without resizing the drawing buffer.
+           The min() width caps the canvas so its height never exceeds 70vh,
+           which keeps the editor inside the viewport on any screen. */
+        width: min(100%, calc(70vh * 4 / 3));
         aspect-ratio: 4 / 3;
         height: auto;
+        margin: 0 auto;
         touch-action: none;
         transition:
           background 0.15s,
