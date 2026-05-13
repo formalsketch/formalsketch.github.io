@@ -136,6 +136,32 @@ function flushHistory() {
 	}
 }
 
+function summarizeFSM(nodes, links) {
+	if (!nodes.length) return 'Empty diagram.';
+	var startName = null;
+	var accepts = [];
+	for (var i = 0; i < links.length; i++) {
+		if (links[i] instanceof StartLink) {
+			var s = nodes.indexOf(links[i].node);
+			if (s !== -1) startName = nodes[s].text || 'q' + s;
+		}
+	}
+	for (var k = 0; k < nodes.length; k++) {
+		if (nodes[k].isAcceptState) {
+			accepts.push(nodes[k].text || 'q' + k);
+		}
+	}
+	var ntrans = 0;
+	for (var t = 0; t < links.length; t++) {
+		if (links[t] instanceof Link || links[t] instanceof SelfLink) ntrans++;
+	}
+	var parts = [nodes.length + ' state' + (nodes.length === 1 ? '' : 's')];
+	if (startName) parts.push('start ' + startName);
+	if (accepts.length) parts.push('accept ' + accepts.join(', '));
+	parts.push(ntrans + ' transition' + (ntrans === 1 ? '' : 's'));
+	return parts.join('. ') + '.';
+}
+
 function exportSnapshot() {
 	var s = serializeState();
 	return {

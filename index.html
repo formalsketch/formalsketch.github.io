@@ -100,6 +100,21 @@
       * {
         box-sizing: border-box;
       }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      :focus-visible {
+        outline: 2px solid var(--canvas-selected);
+        outline-offset: 2px;
+      }
       html,
       body {
         margin: 0;
@@ -921,37 +936,107 @@
 
       <section class="canvas-area">
         <div class="toolbar">
-          <button id="btn-undo" disabled title="Undo (Cmd/Ctrl+Z)">
+          <button
+            id="btn-undo"
+            disabled
+            title="Undo (Cmd/Ctrl+Z)"
+            aria-label="Undo"
+            aria-keyshortcuts="Control+Z Meta+Z"
+          >
             ↶ Undo
           </button>
-          <button id="btn-redo" disabled title="Redo (Cmd/Ctrl+Shift+Z)">
+          <button
+            id="btn-redo"
+            disabled
+            title="Redo (Cmd/Ctrl+Shift+Z)"
+            aria-label="Redo"
+            aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z"
+          >
             ↷ Redo
           </button>
           <span class="sep"></span>
-          <button id="btn-clear" title="Clear current FSM">Clear</button>
-          <button id="btn-regex" title="Build NFA from a regular expression">
+          <button
+            id="btn-clear"
+            title="Clear current FSM"
+            aria-label="Clear current FSM"
+          >
+            Clear
+          </button>
+          <button
+            id="btn-regex"
+            title="Build NFA from a regular expression"
+            aria-label="Build NFA from a regular expression"
+          >
             Regex...
           </button>
-          <button id="btn-to-dfa" title="Convert NFA to DFA (subset construction)">
+          <button
+            id="btn-to-dfa"
+            title="Convert NFA to DFA (subset construction)"
+            aria-label="Convert NFA to DFA"
+          >
             To DFA
           </button>
-          <button id="btn-minimize" title="Minimize DFA (partition refinement)">
+          <button
+            id="btn-minimize"
+            title="Minimize DFA (partition refinement)"
+            aria-label="Minimize DFA"
+          >
             Minimize
           </button>
-          <button id="btn-nl" title="Generate or describe an FSM in plain English">
+          <button
+            id="btn-nl"
+            title="Generate or describe an FSM in plain English"
+            aria-label="Generate or describe an FSM in plain English"
+          >
             Generate...
           </button>
-          <select id="examples-select" title="Load a demo FSM">
+          <select
+            id="examples-select"
+            title="Load a demo FSM"
+            aria-label="Load an example FSM"
+          >
             <option value="">Examples...</option>
           </select>
-          <button id="btn-simulate" title="Simulate input on this FSM">
+          <button
+            id="btn-simulate"
+            title="Simulate input on this FSM"
+            aria-label="Open simulator"
+          >
             Simulate
           </button>
-          <button id="btn-lint" title="Diagram checks">Lint</button>
-          <button id="btn-share" title="Copy share link">Share</button>
-          <button id="btn-layout" title="Auto-arrange states">Auto layout</button>
-          <button id="btn-import" title="Import a JSON file">Import</button>
-          <button id="btn-export-json" title="Download as JSON">
+          <button
+            id="btn-lint"
+            title="Diagram checks"
+            aria-label="Open diagram checks"
+          >
+            Lint
+          </button>
+          <button
+            id="btn-share"
+            title="Copy share link"
+            aria-label="Copy share link to clipboard"
+          >
+            Share
+          </button>
+          <button
+            id="btn-layout"
+            title="Auto-arrange states"
+            aria-label="Auto-arrange states"
+          >
+            Auto layout
+          </button>
+          <button
+            id="btn-import"
+            title="Import a JSON file"
+            aria-label="Import an FSM JSON file"
+          >
+            Import
+          </button>
+          <button
+            id="btn-export-json"
+            title="Download as JSON"
+            aria-label="Download current FSM as JSON"
+          >
             Export JSON
           </button>
           <input
@@ -981,14 +1066,25 @@
           </select>
         </div>
 
-        <div class="canvas-wrap">
-          <canvas id="canvas" width="800" height="600">
+        <div
+          class="canvas-wrap"
+          role="application"
+          aria-label="FSM editor"
+          aria-describedby="fsm-summary"
+        >
+          <canvas id="canvas" width="800" height="600" tabindex="0">
             <span class="error"
               >Your browser does not support<br />the HTML5 &lt;canvas&gt;
               element</span
             >
           </canvas>
         </div>
+        <div
+          id="fsm-summary"
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+        ></div>
 
         <div class="sim-panel" id="sim-panel" hidden>
           <input

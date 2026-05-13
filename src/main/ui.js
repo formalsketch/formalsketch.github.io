@@ -204,14 +204,21 @@ function wireUI() {
 		updateThemeButton();
 	}
 
+	var summaryEl = document.getElementById('fsm-summary');
+	function updateFSMSummary() {
+		if (summaryEl) summaryEl.textContent = summarizeFSM(nodes, links);
+	}
+
 	Workspace.onChange(function () {
 		renderSidebar();
 		updateTitle();
 		updateLintBadge();
+		updateFSMSummary();
 	});
 	History.onChange(function () {
 		updateToolbar();
 		updateLintBadge();
+		updateFSMSummary();
 	});
 
 	// from upstream PR #39: shortcuts help modal, populated lazily from
@@ -927,4 +934,5 @@ function wireUI() {
 	updateTitle();
 	updateToolbar();
 	updateLintBadge();
+	updateFSMSummary();
 }
