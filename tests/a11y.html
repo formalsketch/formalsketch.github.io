@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>axe-core report</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js"></script>
+		<style>
+			body {
+				font:
+					14px/1.5 -apple-system,
+					BlinkMacSystemFont,
+					'Segoe UI',
+					sans-serif;
+				margin: 24px;
+				max-width: 1100px;
+			}
+			iframe {
+				display: block;
+				width: 100%;
+				height: 540px;
+				border: 1px solid #ddd;
+				border-radius: 6px;
+				margin-bottom: 16px;
+			}
+			pre {
+				background: #f5f5f5;
+				padding: 14px;
+				border-radius: 6px;
+				overflow-x: auto;
+				font:
+					12px/1.5 ui-monospace,
+					Menlo,
+					Consolas,
+					monospace;
+			}
+			.pass {
+				color: #0a7;
+				font-weight: 600;
+			}
+			.fail {
+				color: #c00;
+				font-weight: 600;
+			}
+			h1 {
+				font-size: 18px;
+				margin: 0 0 12px;
+			}
+			.row {
+				display: flex;
+				gap: 12px;
+				align-items: baseline;
+				margin-bottom: 12px;
+			}
+			button {
+				font: inherit;
+				padding: 6px 12px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>axe-core accessibility report</h1>
+		<p>
+			Loads the editor in an iframe and runs axe-core's WCAG 2.0/2.1 AA rule
+			set against it. Re-run after interacting with the iframe to test
+			transient states (open modal, focused field).
+		</p>
+		<div class="row">
+			<button id="run">Run axe.run()</button>
+			<span id="summary"></span>
+		</div>
+		<iframe id="app" src="../index.html" title="editor under test"></iframe>
+		<pre id="report">Click "Run axe.run()" after the iframe loads.</pre>
+
+		<script>
+			var frame = document.getElementById('app');
+			var report = document.getElementById('report');
+			var summary = document.getElementById('summary');
+			var runBtn = document.getElementById('run');
+
+			runBtn.onclick = async function () {
+				report.textContent = 'running...';
+				summary.textContent = '';
+				try {
+					var doc = frame.contentDocument;
+					var results = await axe.run(doc, {
+						runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'best-practice'] },
+					});
+					var v = results.violations;
+					summary.textContent =
+						v.length + ' violation(s), ' + results.passes.length + ' passes';
+					summary.className = v.length === 0 ? 'pass' : 'fail';
+					if (!v.length) {
+						report.textContent = 'No violations.';
+						return;
+					}
+					var lines = [];
+					for (var i = 0; i < v.length; i++) {
+						lines.push(
+							'[' +
+								v[i].impact +
+								'] ' +
+								v[i].id +
+								': ' +
+								v[i].help +
+								'\n  ' +
+								v[i].helpUrl,
+						);
+						for (var n = 0; n < v[i].nodes.length; n++) {
+							var node = v[i].nodes[n];
+							lines.push('  - ' + node.target.join(' ') + '\n    ' + node.html);
+						}
+						lines.push('');
+					}
+					report.textContent = lines.join('\n');
+				} catch (e) {
+					report.textContent = 'axe failed: ' + (e.message || e);
+				}
+			};
+		</script>
+	</body>
+</html>

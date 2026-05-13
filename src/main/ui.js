@@ -420,13 +420,20 @@ function wireUI() {
 				')',
 		);
 		draw();
-		// fade the transition highlight after a moment
-		setTimeout(function () {
-			if (simulationState) {
-				simulationState.lastLink = null;
-				draw();
-			}
-		}, 350);
+		var reduceMotion =
+			window.matchMedia &&
+			window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduceMotion) {
+			simulationState.lastLink = null;
+			draw();
+		} else {
+			setTimeout(function () {
+				if (simulationState) {
+					simulationState.lastLink = null;
+					draw();
+				}
+			}, 350);
+		}
 	}
 
 	if (simBtn && simPanel) {
