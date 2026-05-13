@@ -78,4 +78,4 @@ The deployed site is whatever ends up in the repo root: `index.html`, `fsm.js`, 
 
 Smoke tests live in `tests/` and run under Node by `eval`ing the built bundle with minimal browser globals stubbed. They cover the pure-logic modules: regex / Thompson, subset construction, minimization, simulation, lint, share encode/decode, JSON import validation, LaTeX escaping, model JSON parsing. There are two HTML harnesses: `tests/latex_escape.html` (manual visual confirmation) and `tests/a11y.html` (axe-core in an iframe).
 
-The deploy workflow runs `node --check fsm.js` as a sanity gate; it does not run the smoke tests, because that's easy to add later and our changes are mostly additive over a known-good baseline.
+The deploy workflow has three gates before pushing to Pages: `node --check fsm.js`, a Lighthouse run that asserts performance / accessibility / best-practices each stay above 0.9, and a Playwright smoke test that draws a state, labels it, exports SVG, and asserts the label is in the SVG body. Node smoke tests in `tests/*.js` aren't wired into CI yet; they're meant to run locally with `node tests/<name>.js`.

@@ -133,7 +133,7 @@ function ExportAsLaTeX() {
 	};
 	this.measureText = function (text) {
 		var c = canvas.getContext('2d');
-		c.font = '20px "Times New Romain", serif';
+		c.font = '20px "Times New Roman", serif';
 		return c.measureText(text);
 	};
 	this.advancedFillText = function (text, originalText, x, y, angleOrNull) {

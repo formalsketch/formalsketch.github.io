@@ -107,7 +107,7 @@ function restoreBackup() {
 	deserializeState(Workspace.loadActive());
 }
 
-// History commit helpers — defined here so other files can call them after mutations.
+// History commit helpers, defined here so other files can call them after mutations.
 var __historyTimer = null;
 
 function commitHistory() {

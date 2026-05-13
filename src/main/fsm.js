@@ -541,7 +541,9 @@ function selectionOrder() {
 	var ls = links
 		.slice()
 		.filter(function (l) {
-			return l instanceof Link || l instanceof SelfLink || l instanceof StartLink;
+			return (
+				l instanceof Link || l instanceof SelfLink || l instanceof StartLink
+			);
 		})
 		.sort(function (a, b) {
 			return (a.text || '').localeCompare(b.text || '');
@@ -777,13 +779,25 @@ document.onkeydown = function (e) {
 		nudgeSelected(dx, dy);
 		e.preventDefault();
 		return false;
-	} else if (key === 78 && !meta && !e.shiftKey && !e.altKey && selectedObject == null) {
+	} else if (
+		key === 78 &&
+		!meta &&
+		!e.shiftKey &&
+		!e.altKey &&
+		selectedObject == null
+	) {
 		// N: create a state at viewport center. Only fires when no element is
 		// selected so it doesn't fight typing 'n' into a label.
 		createNodeAtCenter();
 		e.preventDefault();
 		return false;
-	} else if (key === 76 && !meta && !e.shiftKey && !e.altKey && selectedObject instanceof Node) {
+	} else if (
+		key === 76 &&
+		!meta &&
+		!e.shiftKey &&
+		!e.altKey &&
+		selectedObject instanceof Node
+	) {
 		// L: start a keyboard-driven link from the selected node.
 		startKeyboardLink();
 		e.preventDefault();

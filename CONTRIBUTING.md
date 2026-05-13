@@ -19,7 +19,7 @@ src/                Hand-written source, concatenated into fsm.js
   export_as/        SVG and LaTeX exporters
   main/             fsm, save, history, theme, workspace, io, ui, math,
                     simulate, lint, share, regex_to_nfa, nfa_to_dfa,
-                    minimize, layout, ai
+                    minimize, layout, nl, examples
 index.html          Page entry, loaded as the GitHub Pages root
 fsm.js              Build output at repo root (gitignored)
 build.js            Node builder
@@ -45,7 +45,7 @@ Open `./index.html` directly in a browser, or serve `./` with any static server.
 ## Contribution flow
 
 1. Fork and create a branch off `main`.
-2. Make your change in `src/`. Do not edit `./fsm.js` directly — it is regenerated.
+2. Make your change in `src/`. Do not edit `./fsm.js` directly; it is regenerated.
 3. Run `node build.js` and reload `./index.html`. Verify in the browser that the four core gestures still work:
    - **Double-click** the canvas to add a state
    - **Shift-drag** to add an arrow
@@ -57,7 +57,7 @@ Open `./index.html` directly in a browser, or serve `./` with any static server.
 
 ## Style
 
-Prettier config lives in `.prettierrc`: tabs for indentation, single quotes, otherwise defaults. The shipped JS must stay browser-compatible ES5 — no `let`/`const`/arrow functions in `src/` outside the build scripts.
+Prettier config lives in `.prettierrc`: tabs for indentation, single quotes, otherwise defaults. The shipped JS must stay browser-compatible ES5; no `let`/`const`/arrow functions in `src/` outside the build scripts.
 
 ## Reporting bugs
 

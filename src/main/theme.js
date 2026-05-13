@@ -1,5 +1,5 @@
 // Theme manager: 'system' | 'light' | 'dark'.
-// Default is 'system' — follows OS color scheme via prefers-color-scheme.
+// Default is 'system' (follows OS color scheme via prefers-color-scheme).
 // User choice persists in localStorage['fsm_theme'].
 
 var Theme = (function () {

@@ -244,7 +244,10 @@ function wireUI() {
 			['Undo / Redo', 'Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z'],
 			['Tab / Shift+Tab', 'cycle selection through nodes then links'],
 			['N', 'new state at canvas center (when nothing is selected)'],
-			['L', 'start an arrow from the selected state; Tab cycles target, Enter confirms'],
+			[
+				'L',
+				'start an arrow from the selected state; Tab cycles target, Enter confirms',
+			],
 			['Arrow keys', 'nudge the selected state by 5px (Shift+Arrow for 1px)'],
 			['Escape', 'deselect (or cancel an in-progress arrow)'],
 		];

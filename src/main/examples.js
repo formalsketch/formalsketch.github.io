@@ -78,12 +78,7 @@ function exampleRegexAbb() {
 function exampleMod4Counter() {
 	return _wrap(
 		[_node('0', true), _node('1', false), _node('2', false), _node('3', false)],
-		[
-			_link(0, 1, 'tick'),
-			_link(1, 2, 'tick'),
-			_link(2, 3, 'tick'),
-			_link(3, 0, 'tick'),
-		],
+		[_link(0, 1, 't'), _link(1, 2, 't'), _link(2, 3, 't'), _link(3, 0, 't')],
 		0,
 	);
 }

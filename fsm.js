@@ -593,7 +593,7 @@ function ExportAsLaTeX() {
 	};
 	this.measureText = function (text) {
 		var c = canvas.getContext('2d');
-		c.font = '20px "Times New Romain", serif';
+		c.font = '20px "Times New Roman", serif';
 		return c.measureText(text);
 	};
 	this.advancedFillText = function (text, originalText, x, y, angleOrNull) {
@@ -744,7 +744,7 @@ function ExportAsSVG() {
 	};
 	this.measureText = function (text) {
 		var c = canvas.getContext('2d');
-		c.font = '20px "Times New Romain", serif';
+		c.font = '20px "Times New Roman", serif';
 		return c.measureText(text);
 	};
 	this.fillText = function (text, x, y) {
@@ -849,12 +849,7 @@ function exampleRegexAbb() {
 function exampleMod4Counter() {
 	return _wrap(
 		[_node('0', true), _node('1', false), _node('2', false), _node('3', false)],
-		[
-			_link(0, 1, 'tick'),
-			_link(1, 2, 'tick'),
-			_link(2, 3, 'tick'),
-			_link(3, 0, 'tick'),
-		],
+		[_link(0, 1, 't'), _link(1, 2, 't'), _link(2, 3, 't'), _link(3, 0, 't')],
 		0,
 	);
 }
@@ -1460,7 +1455,9 @@ function selectionOrder() {
 	var ls = links
 		.slice()
 		.filter(function (l) {
-			return l instanceof Link || l instanceof SelfLink || l instanceof StartLink;
+			return (
+				l instanceof Link || l instanceof SelfLink || l instanceof StartLink
+			);
 		})
 		.sort(function (a, b) {
 			return (a.text || '').localeCompare(b.text || '');
@@ -1696,13 +1693,25 @@ document.onkeydown = function (e) {
 		nudgeSelected(dx, dy);
 		e.preventDefault();
 		return false;
-	} else if (key === 78 && !meta && !e.shiftKey && !e.altKey && selectedObject == null) {
+	} else if (
+		key === 78 &&
+		!meta &&
+		!e.shiftKey &&
+		!e.altKey &&
+		selectedObject == null
+	) {
 		// N: create a state at viewport center. Only fires when no element is
 		// selected so it doesn't fight typing 'n' into a label.
 		createNodeAtCenter();
 		e.preventDefault();
 		return false;
-	} else if (key === 76 && !meta && !e.shiftKey && !e.altKey && selectedObject instanceof Node) {
+	} else if (
+		key === 76 &&
+		!meta &&
+		!e.shiftKey &&
+		!e.altKey &&
+		selectedObject instanceof Node
+	) {
 		// L: start a keyboard-driven link from the selected node.
 		startKeyboardLink();
 		e.preventDefault();
@@ -2999,7 +3008,7 @@ function restoreBackup() {
 	deserializeState(Workspace.loadActive());
 }
 
-// History commit helpers — defined here so other files can call them after mutations.
+// History commit helpers, defined here so other files can call them after mutations.
 var __historyTimer = null;
 
 function commitHistory() {
@@ -3337,7 +3346,7 @@ function simulate(nodes, links, input) {
 }
 
 // Theme manager: 'system' | 'light' | 'dark'.
-// Default is 'system' — follows OS color scheme via prefers-color-scheme.
+// Default is 'system' (follows OS color scheme via prefers-color-scheme).
 // User choice persists in localStorage['fsm_theme'].
 
 var Theme = (function () {
@@ -3672,7 +3681,10 @@ function wireUI() {
 			['Undo / Redo', 'Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z'],
 			['Tab / Shift+Tab', 'cycle selection through nodes then links'],
 			['N', 'new state at canvas center (when nothing is selected)'],
-			['L', 'start an arrow from the selected state; Tab cycles target, Enter confirms'],
+			[
+				'L',
+				'start an arrow from the selected state; Tab cycles target, Enter confirms',
+			],
 			['Arrow keys', 'nudge the selected state by 5px (Shift+Arrow for 1px)'],
 			['Escape', 'deselect (or cancel an in-progress arrow)'],
 		];
