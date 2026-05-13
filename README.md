@@ -79,7 +79,7 @@ Open `index.html` in a browser, or serve the directory with any static server. `
 
 ## Attribution
 
-Based on the Finite State Machine Designer by **Evan Wallace** (2010), released under the MIT License. This fork is developed by **Iman Mohammadi** (2026). Feature work and the modular structure are adapted from open pull requests on [evanw/fsm](https://github.com/evanw/fsm/pulls); the `// from upstream PR #N:` provenance comments in the source point to the specific PR each change came from. See [LICENSE](LICENSE) for the combined notice.
+Based on the Finite State Machine Designer by **Evan Wallace** (2010), released under the MIT License. This fork is developed by **Iman Mohammadi** (2026), drawing on feedback and ideas from the open pull requests on the upstream [evanw/fsm](https://github.com/evanw/fsm/pulls) repository. The `// from upstream PR #N:` notes in the source identify which PR each change came from. See [LICENSE](LICENSE) for the combined notice.
 
 ## License
 
