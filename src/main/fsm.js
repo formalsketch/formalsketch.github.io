@@ -189,7 +189,7 @@ function canvasHasFocus() {
 }
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
-	text = convertLatexShortcuts(originalText);
+	var text = convertLatexShortcuts(originalText);
 	c.font = '20px "Times New Roman", serif';
 	var width = c.measureText(text).width;
 
@@ -231,7 +231,10 @@ var caretVisible = true;
 
 function resetCaret() {
 	clearInterval(caretTimer);
-	caretTimer = setInterval('caretVisible = !caretVisible; draw()', 500);
+	caretTimer = setInterval(function () {
+		caretVisible = !caretVisible;
+		draw();
+	}, 500);
 	caretVisible = true;
 }
 
@@ -722,10 +725,29 @@ document.onkeydown = function (e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if (key === 9) {
-		// Tab: cycle selection, or cycle the link target while in link mode.
+		// Tab cycles within the canvas only while there's something to cycle.
+		// Past the boundary of the order, we deselect and let the browser move
+		// focus normally so the canvas isn't a keyboard trap.
+		if (linkMode) {
+			cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
+			e.preventDefault();
+			return false;
+		}
+		var order = selectionOrder();
+		if (!order.length || selectedObject == null) {
+			return true;
+		}
+		var idx = order.indexOf(selectedObject);
+		var next = idx + (e.shiftKey ? -1 : 1);
+		if (idx === -1 || next < 0 || next >= order.length) {
+			selectedObject = null;
+			draw();
+			return true;
+		}
+		selectedObject = order[next];
+		resetCaret();
+		draw();
 		e.preventDefault();
-		if (linkMode) cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
-		else cycleSelection(e.shiftKey ? -1 : 1);
 		return false;
 	} else if (key === 27) {
 		// Escape

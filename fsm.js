@@ -1108,7 +1108,7 @@ function canvasHasFocus() {
 }
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
-	text = convertLatexShortcuts(originalText);
+	var text = convertLatexShortcuts(originalText);
 	c.font = '20px "Times New Roman", serif';
 	var width = c.measureText(text).width;
 
@@ -1150,7 +1150,10 @@ var caretVisible = true;
 
 function resetCaret() {
 	clearInterval(caretTimer);
-	caretTimer = setInterval('caretVisible = !caretVisible; draw()', 500);
+	caretTimer = setInterval(function () {
+		caretVisible = !caretVisible;
+		draw();
+	}, 500);
 	caretVisible = true;
 }
 
@@ -1641,10 +1644,29 @@ document.onkeydown = function (e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if (key === 9) {
-		// Tab: cycle selection, or cycle the link target while in link mode.
+		// Tab cycles within the canvas only while there's something to cycle.
+		// Past the boundary of the order, we deselect and let the browser move
+		// focus normally so the canvas isn't a keyboard trap.
+		if (linkMode) {
+			cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
+			e.preventDefault();
+			return false;
+		}
+		var order = selectionOrder();
+		if (!order.length || selectedObject == null) {
+			return true;
+		}
+		var idx = order.indexOf(selectedObject);
+		var next = idx + (e.shiftKey ? -1 : 1);
+		if (idx === -1 || next < 0 || next >= order.length) {
+			selectedObject = null;
+			draw();
+			return true;
+		}
+		selectedObject = order[next];
+		resetCaret();
+		draw();
 		e.preventDefault();
-		if (linkMode) cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
-		else cycleSelection(e.shiftKey ? -1 : 1);
 		return false;
 	} else if (key === 27) {
 		// Escape
@@ -3089,6 +3111,12 @@ function validateSnapshot(obj) {
 	if (obj.format !== SAVE_FORMAT) {
 		return 'unexpected format ' + JSON.stringify(obj.format);
 	}
+	return validateSnapshotShape(obj);
+}
+
+// Shared shape check used by both file import (via validateSnapshot) and the
+// URL-hash loader (which doesn't carry the format envelope).
+function validateSnapshotShape(obj) {
 	if (!Array.isArray(obj.nodes)) return 'nodes must be an array';
 	if (!Array.isArray(obj.links)) return 'links must be an array';
 	for (var i = 0; i < obj.nodes.length; i++) {
@@ -3097,9 +3125,21 @@ function validateSnapshot(obj) {
 			return 'node[' + i + '] missing numeric x/y';
 		}
 	}
+	var N = obj.nodes.length;
+	function bad(idx) {
+		return typeof idx !== 'number' || idx < 0 || idx >= N || (idx | 0) !== idx;
+	}
 	for (var j = 0; j < obj.links.length; j++) {
 		var l = obj.links[j];
-		if (l.type !== 'Link' && l.type !== 'SelfLink' && l.type !== 'StartLink') {
+		if (l.type === 'Link') {
+			if (bad(l.nodeA) || bad(l.nodeB)) {
+				return 'link[' + j + '] references a node index outside 0..' + (N - 1);
+			}
+		} else if (l.type === 'SelfLink' || l.type === 'StartLink') {
+			if (bad(l.node)) {
+				return 'link[' + j + '] references a node index outside 0..' + (N - 1);
+			}
+		} else {
 			return 'link[' + j + '] unknown type ' + JSON.stringify(l.type);
 		}
 	}
@@ -3151,27 +3191,26 @@ function maybeLoadFromHash() {
 	var hash = window.location.hash.replace(/^#/, '');
 	if (!hash) return false;
 	// Strip the hash up front so a refused or failed load does not re-prompt
-	// on the next reload.
+	// on reload. The setattr fallback would navigate, which we don't want.
 	try {
 		history.replaceState(
 			null,
 			'',
 			window.location.pathname + window.location.search,
 		);
-	} catch (e) {
-		window.location.hash = '';
-	}
+	} catch (e) {}
 	if (!confirm('Load FSM from URL? This will replace your current diagram.')) {
 		return false;
 	}
 	try {
-		var json = shareDecode(hash);
-		var data = JSON.parse(json);
+		var data = JSON.parse(shareDecode(hash));
+		var shapeError = validateSnapshotShape(data);
+		if (shapeError) throw new Error(shapeError);
 		deserializeState(data);
 		saveBackup();
 		return true;
 	} catch (e) {
-		showToast('Could not decode shared FSM', 'error');
+		showToast('Could not decode shared FSM: ' + e.message, 'error');
 		return false;
 	}
 }

@@ -219,6 +219,12 @@ function validateSnapshot(obj) {
 	if (obj.format !== SAVE_FORMAT) {
 		return 'unexpected format ' + JSON.stringify(obj.format);
 	}
+	return validateSnapshotShape(obj);
+}
+
+// Shared shape check used by both file import (via validateSnapshot) and the
+// URL-hash loader (which doesn't carry the format envelope).
+function validateSnapshotShape(obj) {
 	if (!Array.isArray(obj.nodes)) return 'nodes must be an array';
 	if (!Array.isArray(obj.links)) return 'links must be an array';
 	for (var i = 0; i < obj.nodes.length; i++) {
@@ -227,9 +233,21 @@ function validateSnapshot(obj) {
 			return 'node[' + i + '] missing numeric x/y';
 		}
 	}
+	var N = obj.nodes.length;
+	function bad(idx) {
+		return typeof idx !== 'number' || idx < 0 || idx >= N || (idx | 0) !== idx;
+	}
 	for (var j = 0; j < obj.links.length; j++) {
 		var l = obj.links[j];
-		if (l.type !== 'Link' && l.type !== 'SelfLink' && l.type !== 'StartLink') {
+		if (l.type === 'Link') {
+			if (bad(l.nodeA) || bad(l.nodeB)) {
+				return 'link[' + j + '] references a node index outside 0..' + (N - 1);
+			}
+		} else if (l.type === 'SelfLink' || l.type === 'StartLink') {
+			if (bad(l.node)) {
+				return 'link[' + j + '] references a node index outside 0..' + (N - 1);
+			}
+		} else {
 			return 'link[' + j + '] unknown type ' + JSON.stringify(l.type);
 		}
 	}

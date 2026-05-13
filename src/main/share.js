@@ -43,27 +43,26 @@ function maybeLoadFromHash() {
 	var hash = window.location.hash.replace(/^#/, '');
 	if (!hash) return false;
 	// Strip the hash up front so a refused or failed load does not re-prompt
-	// on the next reload.
+	// on reload. The setattr fallback would navigate, which we don't want.
 	try {
 		history.replaceState(
 			null,
 			'',
 			window.location.pathname + window.location.search,
 		);
-	} catch (e) {
-		window.location.hash = '';
-	}
+	} catch (e) {}
 	if (!confirm('Load FSM from URL? This will replace your current diagram.')) {
 		return false;
 	}
 	try {
-		var json = shareDecode(hash);
-		var data = JSON.parse(json);
+		var data = JSON.parse(shareDecode(hash));
+		var shapeError = validateSnapshotShape(data);
+		if (shapeError) throw new Error(shapeError);
 		deserializeState(data);
 		saveBackup();
 		return true;
 	} catch (e) {
-		showToast('Could not decode shared FSM', 'error');
+		showToast('Could not decode shared FSM: ' + e.message, 'error');
 		return false;
 	}
 }
