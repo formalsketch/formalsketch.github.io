@@ -369,6 +369,10 @@ window.onload = function () {
 	draw();
 
 	canvas.onmousedown = function (e) {
+		// Ensure the canvas owns keyboard focus once the user interacts with it;
+		// without this, focus often stays on the last clicked toolbar button and
+		// the keydown handler bails out via canvasHasFocus().
+		if (typeof canvas.focus === 'function') canvas.focus();
 		var mouse = crossBrowserRelativeMousePos(e);
 		flushHistory();
 		selectedObject = selectObject(mouse.x, mouse.y);
@@ -727,17 +731,22 @@ document.onkeydown = function (e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if (key === 9) {
-		// Tab cycles within the canvas only while there's something to cycle.
-		// Past the boundary of the order, we deselect and let the browser move
-		// focus normally so the canvas isn't a keyboard trap.
+		// Tab cycles within the canvas. From no-selection we step in by selecting
+		// the first (or last, on Shift+Tab) item. Past the boundary we deselect
+		// and let the browser move focus normally so the canvas isn't a trap.
 		if (linkMode) {
 			cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
 			e.preventDefault();
 			return false;
 		}
 		var order = selectionOrder();
-		if (!order.length || selectedObject == null) {
-			return true;
+		if (!order.length) return true;
+		if (selectedObject == null) {
+			selectedObject = e.shiftKey ? order[order.length - 1] : order[0];
+			resetCaret();
+			draw();
+			e.preventDefault();
+			return false;
 		}
 		var idx = order.indexOf(selectedObject);
 		var next = idx + (e.shiftKey ? -1 : 1);
