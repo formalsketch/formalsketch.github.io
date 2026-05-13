@@ -1103,7 +1103,8 @@ function drawArrow(c, x, y, angle) {
 }
 
 function canvasHasFocus() {
-	return (document.activeElement || document.body) == document.body;
+	var a = document.activeElement || document.body;
+	return a === document.body || a === canvas;
 }
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
@@ -1445,6 +1446,112 @@ var shift = false;
 // drag from "move" to "create arrow". Set by the arrow-mode button in ui.js.
 var touchArrowMode = false;
 var lastTap = null;
+// Keyboard-only "link mode": L starts it from the selected node, Tab cycles
+// through candidate targets, Enter confirms, Escape cancels.
+var linkMode = false;
+
+function selectionOrder() {
+	var ns = nodes.slice().sort(function (a, b) {
+		return (a.text || '').localeCompare(b.text || '');
+	});
+	var ls = links
+		.slice()
+		.filter(function (l) {
+			return l instanceof Link || l instanceof SelfLink || l instanceof StartLink;
+		})
+		.sort(function (a, b) {
+			return (a.text || '').localeCompare(b.text || '');
+		});
+	return ns.concat(ls);
+}
+
+function cycleSelection(direction) {
+	var order = selectionOrder();
+	if (!order.length) return;
+	var idx = order.indexOf(selectedObject);
+	if (idx === -1) idx = direction > 0 ? -1 : 0;
+	idx = (idx + (direction > 0 ? 1 : -1) + order.length) % order.length;
+	selectedObject = order[idx];
+	resetCaret();
+	draw();
+}
+
+function nodesSortedByLabel() {
+	return nodes.slice().sort(function (a, b) {
+		return (a.text || '').localeCompare(b.text || '');
+	});
+}
+
+function startKeyboardLink() {
+	if (!(selectedObject instanceof Node)) return;
+	var from = selectedObject;
+	var others = nodes.filter(function (n) {
+		return n !== from;
+	});
+	if (others.length) {
+		var sorted = others.sort(function (a, b) {
+			return (a.text || '').localeCompare(b.text || '');
+		});
+		currentLink = new Link(from, sorted[0]);
+	} else {
+		currentLink = new SelfLink(from, { x: from.x, y: from.y - 60 });
+	}
+	linkMode = true;
+	draw();
+}
+
+function cycleKeyboardLinkTarget(direction) {
+	if (!linkMode || !currentLink) return;
+	var from = selectedObject;
+	var sorted = nodesSortedByLabel();
+	var current;
+	if (currentLink instanceof Link) current = currentLink.nodeB;
+	else if (currentLink instanceof SelfLink) current = currentLink.node;
+	var idx = sorted.indexOf(current);
+	idx = (idx + (direction > 0 ? 1 : -1) + sorted.length) % sorted.length;
+	var target = sorted[idx];
+	if (target === from) {
+		currentLink = new SelfLink(from, { x: from.x, y: from.y - 60 });
+	} else {
+		currentLink = new Link(from, target);
+	}
+	draw();
+}
+
+function confirmKeyboardLink() {
+	if (!linkMode || !currentLink) return;
+	flushHistory();
+	links.push(currentLink);
+	selectedObject = currentLink;
+	currentLink = null;
+	linkMode = false;
+	commitHistory();
+	draw();
+}
+
+function cancelKeyboardLink() {
+	linkMode = false;
+	currentLink = null;
+	draw();
+}
+
+function createNodeAtCenter() {
+	flushHistory();
+	var node = new Node(canvas.width / 2, canvas.height / 2);
+	nodes.push(node);
+	selectedObject = node;
+	resetCaret();
+	draw();
+	commitHistory();
+}
+
+function nudgeSelected(dx, dy) {
+	if (!(selectedObject instanceof Node)) return;
+	selectedObject.x += dx;
+	selectedObject.y += dy;
+	draw();
+	commitHistoryDebounced();
+}
 
 function deleteSelected() {
 	if (selectedObject == null) return;
@@ -1533,6 +1640,51 @@ document.onkeydown = function (e) {
 	} else if (!canvasHasFocus()) {
 		// don't read keystrokes when other things have focus
 		return true;
+	} else if (key === 9) {
+		// Tab: cycle selection, or cycle the link target while in link mode.
+		e.preventDefault();
+		if (linkMode) cycleKeyboardLinkTarget(e.shiftKey ? -1 : 1);
+		else cycleSelection(e.shiftKey ? -1 : 1);
+		return false;
+	} else if (key === 27) {
+		// Escape
+		if (linkMode) cancelKeyboardLink();
+		else {
+			selectedObject = null;
+			draw();
+		}
+		e.preventDefault();
+		return false;
+	} else if (key === 13) {
+		// Enter: confirm a keyboard-built link, otherwise no-op.
+		if (linkMode) {
+			confirmKeyboardLink();
+			e.preventDefault();
+			return false;
+		}
+	} else if (key >= 37 && key <= 40 && !meta) {
+		// Arrows nudge the selected node. Shift -> 1px, otherwise 5px.
+		var step = e.shiftKey ? 1 : 5;
+		var dx = 0,
+			dy = 0;
+		if (key === 37) dx = -step;
+		else if (key === 39) dx = step;
+		else if (key === 38) dy = -step;
+		else dy = step;
+		nudgeSelected(dx, dy);
+		e.preventDefault();
+		return false;
+	} else if (key === 78 && !meta && !e.shiftKey && !e.altKey && selectedObject == null) {
+		// N: create a state at viewport center. Only fires when no element is
+		// selected so it doesn't fight typing 'n' into a label.
+		createNodeAtCenter();
+		e.preventDefault();
+		return false;
+	} else if (key === 76 && !meta && !e.shiftKey && !e.altKey && selectedObject instanceof Node) {
+		// L: start a keyboard-driven link from the selected node.
+		startKeyboardLink();
+		e.preventDefault();
+		return false;
 	} else if (key == 8) {
 		// from upstream PR #25: bare backspace on an empty-label selection deletes
 		// the element. PR #25's keydown had two backspace branches and the second
