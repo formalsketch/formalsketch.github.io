@@ -4,7 +4,7 @@ A browser-based finite state machine designer with a built-in simulator, a regex
 
 **Live demo:** https://formalsketch.github.io
 
-![Screenshot](docs/screenshot.png)
+![Screenshot](docs/screenshot.png?v=2)
 
 <!-- Add a 5-10s screen capture of the simulator stepping through "0110" as
      docs/simulator.gif, then un-comment the line below. -->
