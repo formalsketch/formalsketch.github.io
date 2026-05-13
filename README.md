@@ -6,9 +6,7 @@ A browser-based finite state machine designer with a built-in simulator, a regex
 
 ![Screenshot](docs/screenshot.png?v=2)
 
-<!-- Add a 5-10s screen capture of the simulator stepping through "0110" as
-     docs/simulator.gif, then un-comment the line below. -->
-<!-- ![Simulator stepping through 0110](docs/simulator.gif) -->
+![Simulator stepping through 0110](docs/simulator.gif)
 
 ## What's new in this fork
 
