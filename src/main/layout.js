@@ -3,10 +3,12 @@
 // layer <= source layer) get a perpendicular bow so they don't cross through
 // the source node.
 
-var LAYOUT_MARGIN_X = 110;
-var LAYOUT_MARGIN_Y = 80;
-var LAYOUT_STEP_X = 170;
-var LAYOUT_STEP_Y = 110;
+var LAYOUT_MARGIN_X = 90;
+var LAYOUT_MARGIN_Y = 70;
+var LAYOUT_STEP_X = 130;
+var LAYOUT_STEP_Y = 95;
+var LAYOUT_PAD = 60;
+var LAYOUT_MIN_SCALE = 0.45;
 
 function layout(nodes, links) {
 	if (!nodes.length) return;
@@ -68,6 +70,8 @@ function layout(nodes, links) {
 		}
 	}
 
+	fitNodesToCanvas(nodes);
+
 	for (var li = 0; li < links.length; li++) {
 		var lk = links[li];
 		if (!(lk instanceof Link)) continue;
@@ -94,5 +98,36 @@ function layout(nodes, links) {
 		} else if (L instanceof SelfLink) {
 			L.anchorAngle = -Math.PI / 2;
 		}
+	}
+}
+
+// Uniformly scale + recentre so a generated diagram fits the canvas. We never
+// scale up (small FSMs keep their nice spacing) and we clamp the lower bound
+// so nodes don't overlap once you account for nodeRadius.
+function fitNodesToCanvas(nodes) {
+	if (!nodes.length || typeof canvas === 'undefined' || !canvas) return;
+	var W = canvas.width - 2 * LAYOUT_PAD;
+	var H = canvas.height - 2 * LAYOUT_PAD;
+	var minX = Infinity,
+		maxX = -Infinity,
+		minY = Infinity,
+		maxY = -Infinity;
+	for (var i = 0; i < nodes.length; i++) {
+		if (nodes[i].x < minX) minX = nodes[i].x;
+		if (nodes[i].x > maxX) maxX = nodes[i].x;
+		if (nodes[i].y < minY) minY = nodes[i].y;
+		if (nodes[i].y > maxY) maxY = nodes[i].y;
+	}
+	var w = Math.max(maxX - minX, 1);
+	var h = Math.max(maxY - minY, 1);
+	var scale = Math.min(w > W ? W / w : 1, h > H ? H / h : 1);
+	if (scale < LAYOUT_MIN_SCALE) scale = LAYOUT_MIN_SCALE;
+	var cx = (minX + maxX) / 2;
+	var cy = (minY + maxY) / 2;
+	var tx = canvas.width / 2;
+	var ty = canvas.height / 2;
+	for (var j = 0; j < nodes.length; j++) {
+		nodes[j].x = tx + (nodes[j].x - cx) * scale;
+		nodes[j].y = ty + (nodes[j].y - cy) * scale;
 	}
 }
